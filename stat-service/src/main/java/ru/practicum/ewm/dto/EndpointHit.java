@@ -7,9 +7,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @AllArgsConstructor
-public class EndpointHitDto {
-
-    private String id;
+public class EndpointHit {
 
     private String app;
 
