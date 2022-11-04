@@ -24,9 +24,10 @@ public class EventClient extends StatClient {
         );
     }
 
-    public void saveStat(EndpointHit endpointHitList) {
-        log.info("Received request to save stat endpointHitList={}", endpointHitList);
-        post("/hit", endpointHitList);
+    public void saveStat(EndpointHit endpointHit) {
+        log.info("Received request to save stat app={}, uri={}, ip={}, timestamp={}",
+                endpointHit.getApp(), endpointHit.getUri(), endpointHit.getIp(), endpointHit.getTimestamp());
+        post("/hit", endpointHit);
     }
 
     public ResponseEntity<Object> getStat(String start, String end, String uris, Boolean unique) {
