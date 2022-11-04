@@ -1,15 +1,16 @@
 package ru.practicum.ewm.controller;
 
-import ru.practicum.ewm.dto.EndpointHitDto;
+import lombok.extern.slf4j.Slf4j;
+import ru.practicum.ewm.dto.EndpointHit;
 import ru.practicum.ewm.dto.ViewStats;
 import ru.practicum.ewm.service.StatService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 
 @RestController
+@Slf4j
 public class StatController {
 
     private final StatService service;
@@ -20,9 +21,8 @@ public class StatController {
     }
 
     @PostMapping("/hit")
-    public ResponseEntity<String> saveStat(@RequestBody EndpointHitDto endpointHitList) {
-        service.saveStat(endpointHitList);
-        return ResponseEntity.ok().body("Информация сохранена");
+    public void saveStat(@RequestBody EndpointHit endpointHit) {
+        service.saveStat(endpointHit);
     }
 
     @GetMapping("/stats")
