@@ -3,6 +3,7 @@ package ru.practicum.ewm.users.dto;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
+import ru.practicum.ewm.common.Create;
 
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
@@ -12,9 +13,9 @@ import javax.validation.constraints.NotBlank;
 @AllArgsConstructor
 public class NewUserRequest {
 
-    @NotBlank(message = "name should not be blank")
+    @NotBlank(groups = {Create.class}, message = "name should not be blank")
     private String name;
-    @NotBlank(message = "email should not be blank")
-    @Email(message = "email is not correct")
+
+    @Email(groups = {Create.class}, message = "email is not correct")
     private String email;
 }
