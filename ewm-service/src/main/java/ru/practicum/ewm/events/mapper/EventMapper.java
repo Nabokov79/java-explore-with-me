@@ -1,30 +1,34 @@
 package ru.practicum.ewm.events.mapper;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import ru.practicum.ewm.categories.mapper.CategoriesMapper;
 import ru.practicum.ewm.events.dto.EventFullDto;
 import ru.practicum.ewm.events.dto.EventShortDto;
 import ru.practicum.ewm.events.dto.NewEventDto;
 import ru.practicum.ewm.events.model.State;
-import ru.practicum.ewm.paramRequest.Param;
 import ru.practicum.ewm.users.mapper.UsersMapper;
-import org.springframework.stereotype.Component;
 import ru.practicum.ewm.events.model.Event;
 import ru.practicum.ewm.events.model.Location;
-
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.stream.Collectors;
 
-@Component
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class EventMapper {
+
+    private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     public static Event toEvent(NewEventDto newEventDto) {
         Event event = new Event();
         event.setAnnotation(newEventDto.getAnnotation());
         event.setDescription(newEventDto.getDescription());
-        event.setEventDate(LocalDateTime.parse(newEventDto.getEventDate(), Param.DATE_TIME_FORMATTER));
+        event.setEventDate(LocalDateTime.parse(newEventDto.getEventDate(), DATE_TIME_FORMATTER));
         event.setCreatedOn(LocalDateTime.now());
-        event.setPaid(newEventDto.getPaid());
+        event.setPaid(newEventDto.isPaid());
         event.setParticipantLimit(newEventDto.getParticipantLimit());
-        event.setRequestModeration(newEventDto.getRequestModeration());
+        event.setRequestModeration(newEventDto.isRequestModeration());
         event.setTitle(newEventDto.getTitle());
         event.setInitiator(null);
         event.setCategory(null);
@@ -39,16 +43,16 @@ public class EventMapper {
                                 event.getAnnotation(),
                                 CategoriesMapper.toCategoryDto(event.getCategory()),
                                 null,
-                                event.getCreatedOn().format(Param.DATE_TIME_FORMATTER),
+                                event.getCreatedOn().format(DATE_TIME_FORMATTER),
                                 event.getDescription(),
-                                event.getEventDate().format(Param.DATE_TIME_FORMATTER),
+                                event.getEventDate().format(DATE_TIME_FORMATTER),
                                 UsersMapper.toUserShortDto(event.getInitiator()),
                                 new Location(event.getLat(), event.getLon()),
                                 event.getPaid(),
                                 event.getParticipantLimit(),
                                 event.getPublishedOn() != null ? event.getPublishedOn()
-                                                                              .format(Param.DATE_TIME_FORMATTER) : null,
-                                event.getRequestModeration(),
+                                                                              .format(DATE_TIME_FORMATTER) : null,
+                                event.isRequestModeration(),
                                 event.getState(),
                                 event.getTitle(),
                                 null);
@@ -58,11 +62,15 @@ public class EventMapper {
         return new EventShortDto(event.getId(),
                 event.getAnnotation(),
                 CategoriesMapper.toCategoryDto(event.getCategory()),
-                null,
-                event.getEventDate().format(Param.DATE_TIME_FORMATTER),
+                event.getConfirmedRequests().size(),
+                event.getEventDate().format(DATE_TIME_FORMATTER),
                 UsersMapper.toUserShortDto(event.getInitiator()),
                 event.getPaid(),
                 event.getTitle(),
                 null);
+    }
+
+    public static List<EventShortDto> toListDto(List<Event> events) {
+        return events.stream().map(EventMapper::toEventShortDto).collect(Collectors.toList());
     }
 }
