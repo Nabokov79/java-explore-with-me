@@ -1,5 +1,6 @@
 package ru.practicum.ewm.events.repository;
 
+import org.springframework.data.querydsl.QuerydslPredicateExecutor;
 import ru.practicum.ewm.events.model.Event;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -8,12 +9,13 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
-public interface EventsRepository extends JpaRepository<Event,Long> {
+public interface EventsRepository extends JpaRepository<Event,Long>, QuerydslPredicateExecutor<Event> {
 
     List<Event> findAllByInitiatorId(Long initiatorId, Pageable pageable);
 
-    Event findEventByIdAndInitiatorId(Long id, Long initiatorId);
+    Optional<Event> findEventByIdAndInitiatorId(Long id, Long initiatorId);
 
     @Query("select e from Event e where e.initiator.id in :initiatorId " +
                                         "and e.category.id in :categoriesId ")
@@ -22,8 +24,6 @@ public interface EventsRepository extends JpaRepository<Event,Long> {
                                      @Param("categoriesId") Collection<Long> categoriesId
                                      );
 
-    @Query("select e from Event e where e.category.id in :categoriesId and e.paid in :paids")
-    List<Event> findAllEventsByCategoriesIdListAndPaid(@Param("categoriesId") Collection<Long> categoriesId,
-                                                      @Param("paids") Collection<Boolean> paids,
-                                                      Pageable pageable);
+    Optional<Event> findByCategoryId(Long categoryId);
+
 }
