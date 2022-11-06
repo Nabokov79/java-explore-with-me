@@ -22,16 +22,16 @@ public class PublicCompilationsController {
     }
 
     @GetMapping
-    public ResponseEntity<List<CompilationDto>> getAllCompilations(
+    public ResponseEntity<List<CompilationDto>> getAll(
                                               @RequestParam(name = "pinned", defaultValue = "true") Boolean pinned,
                                               @PositiveOrZero @RequestParam(name = "from", defaultValue = "0") int from,
                                               @Positive @RequestParam(name = "size", defaultValue = "10") int size) {
-        List<CompilationDto> compilationDtoList = service.getAllCompilations(pinned, from, size);
+        List<CompilationDto> compilationDtoList = service.getAll(pinned, from, size);
         return ResponseEntity.ok().body(compilationDtoList);
     }
 
     @GetMapping("/{compId}")
-    public ResponseEntity<CompilationDto> getCompilationById(@PathVariable Long compId) {
-        return ResponseEntity.ok().body(service.getCompilationById(compId));
+    public ResponseEntity<CompilationDto> getById(@PathVariable Long compId) {
+        return ResponseEntity.ok().body(service.getById(compId));
     }
 }
