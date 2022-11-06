@@ -5,15 +5,15 @@ import ru.practicum.ewm.compilations.dto.NewCompilationDto;
 
 public interface AdminCompilationsService {
 
-    CompilationDto addCompilation(NewCompilationDto compilation);
+    CompilationDto add(NewCompilationDto compilation);
 
-    void deleteCompilationById(Long compId);
+    void deleteById(Long compId);
 
-    void deleteEventFromCompilation(Long compId,Long eventId);
+    void deleteEvent(Long compId,Long eventId);
 
-    void addEventToCompilation(Long compId, Long eventId);
+    void addEvent(Long compId, Long eventId);
 
-    void unpinCompilationOnPage(Long compId);
+    void unpin(Long compId);
 
-    void pinCompilationOnPage(Long compId);
+    void pin(Long compId);
 }

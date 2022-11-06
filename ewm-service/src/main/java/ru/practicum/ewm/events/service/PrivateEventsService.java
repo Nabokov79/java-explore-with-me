@@ -8,15 +8,15 @@ import java.util.List;
 
 public interface PrivateEventsService {
 
-    List<EventFullDto> getEventByUserId(Long userId,int from, int size);
+    List<EventFullDto> getByUserId(Long userId,int from, int size);
 
-    EventFullDto changeEventByUserId(Long userId, UpdateEventRequest eventRequest);
+    EventFullDto changeByUserId(Long userId, UpdateEventRequest eventRequest);
 
-    EventFullDto createEvent(Long userId, NewEventDto newEventDto);
+    EventFullDto create(Long userId, NewEventDto newEventDto);
 
-    EventFullDto getEventInfoCurrentUser(Long userId,Long eventId);
+    EventFullDto getInfoCurrentUser(Long userId,Long eventId);
 
-    EventFullDto cancelEvent(Long userId, Long eventId);
+    EventFullDto cancel(Long userId, Long eventId);
 
     List<ParticipationRequestDto> getInfoRequestEventsCurrentUser(Long userId, Long eventId);
 

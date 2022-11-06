@@ -9,7 +9,7 @@ import java.util.List;
 
 public interface PublicEventsService {
 
-    List<EventShortDto> getAllEvents(ParamUserRequest paramUserRequest, int from, int size, HttpServletRequest request);
+    List<EventShortDto> getAll(ParamUserRequest paramUserRequest, int from, int size, HttpServletRequest request);
 
-    EventFullDto getFullInfoEvent(Long id, HttpServletRequest request);
+    EventFullDto getFullInfo(Long id, HttpServletRequest request);
 }

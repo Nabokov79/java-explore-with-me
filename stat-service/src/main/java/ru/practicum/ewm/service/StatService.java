@@ -8,5 +8,5 @@ public interface StatService {
 
     void saveStat(EndpointHit endpointHit);
 
-    List<ViewStats> getAllStats(String start, String end, String uris, Boolean unique);
+    List<ViewStats> getAllStats(String start, String end, List<String> uris, Boolean unique);
 }

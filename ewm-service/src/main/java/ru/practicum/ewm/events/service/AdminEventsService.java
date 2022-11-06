@@ -8,11 +8,11 @@ import java.util.List;
 
 public interface AdminEventsService {
 
-    List<EventFullDto> searchEvents(ParamAdminRequest param, int from, int size);
+    List<EventFullDto> search(ParamAdminRequest param, int from, int size);
 
-    EventFullDto editEvent(Long eventId, AdminUpdateEventRequest adminUpdateEvent);
+    EventFullDto edit(Long eventId, AdminUpdateEventRequest adminUpdateEvent);
 
-    EventFullDto publishEvent(Long eventId);
+    EventFullDto publish(Long eventId);
 
-    EventFullDto rejectEvent(Long eventId);
+    EventFullDto reject(Long eventId);
 }

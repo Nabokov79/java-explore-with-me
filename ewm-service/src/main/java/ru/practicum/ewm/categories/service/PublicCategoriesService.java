@@ -5,7 +5,7 @@ import java.util.List;
 
 public interface PublicCategoriesService {
 
-    List<CategoryDto> getAllCategories(int from, int size);
+    List<CategoryDto> getAll(int from, int size);
 
-    CategoryDto getCategoryById(Long catId);
+    CategoryDto getById(Long catId);
 }

@@ -1,49 +1,56 @@
 package ru.practicum.ewm.service;
 
+import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.dsl.BooleanExpression;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import ru.practicum.ewm.dto.EndpointHit;
 import ru.practicum.ewm.dto.ViewStats;
+import ru.practicum.ewm.exeption.BadRequestException;
 import ru.practicum.ewm.mapper.StatsMapper;
+import ru.practicum.ewm.model.App;
+import ru.practicum.ewm.model.QApp;
+import ru.practicum.ewm.model.QStat;
 import ru.practicum.ewm.model.Stat;
+import ru.practicum.ewm.repository.AppRepository;
 import ru.practicum.ewm.repository.StatRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
+@Slf4j
 public class StatServiceImpl implements StatService {
     private final StatRepository repository;
-
-    private final Logger logger = LoggerFactory.getLogger(getClass());
-
-    @Autowired
-    public StatServiceImpl(StatRepository repository) {
-        this.repository = repository;
-    }
+    private final AppRepository appRepository;
 
     @Override
     public void saveStat(EndpointHit endpointHit) {
-        Stat stat = StatsMapper.toStat(endpointHit);
-        repository.save(stat);
-        logger.info("Save stat with param app={}", endpointHit.getApp());
+        BooleanExpression booleanExpression = QApp.app.name.eq(endpointHit.getApp());
+        App app = appRepository.findOne(booleanExpression).orElse(new App(null, endpointHit.getApp()));
+        appRepository.save(app);
+        repository.save(StatsMapper.toStat(endpointHit, app));
+        log.info("Save stat with param app={}", endpointHit.getApp());
     }
 
     @Override
-    public List<ViewStats> getAllStats(String start, String end, String uris, Boolean unique) {
-        List<String> urisList = Arrays.stream(uris.split(",")).collect(Collectors.toList());
+    public List<ViewStats> getAllStats(String start, String end, List<String> uris, Boolean unique) {
         List<Stat> statListDb;
-        if (start != null && end != null) {
+        if (!start.isEmpty() && !end.isEmpty()) {
+            BooleanBuilder booleanBuilder = new BooleanBuilder();
+            if (!uris.isEmpty()) {
+                booleanBuilder.and(QStat.stat.uri.in(uris));
+            } else {
+                throw new BadRequestException(String.format("Uri list empty uris=%s", uris));
+            }
             LocalDateTime start1 = LocalDateTime.parse(start, StatsMapper.DATA_TIME_FORMATTER);
             LocalDateTime end1 = LocalDateTime.parse(end, StatsMapper.DATA_TIME_FORMATTER);
-            statListDb = repository.findAllByUri(urisList).stream()
-                                                       .filter(endpointHit -> endpointHit.getTimestamp().isAfter(start1)
-                                                                           && endpointHit.getTimestamp().isBefore(end1))
-                                                        .collect(Collectors.toList());
+            booleanBuilder.and(QStat.stat.timestamp.after(start1));
+            booleanBuilder.and(QStat.stat.timestamp.before(end1));
+            statListDb = (List<Stat>) repository.findAll(booleanBuilder);
         } else {
-            statListDb = repository.findAllByUri(urisList);
+            statListDb = repository.findAllByUri(uris);
         }
 
         if (unique) {
@@ -52,9 +59,9 @@ public class StatServiceImpl implements StatService {
         List<ViewStats> statList = new ArrayList<>();
         for (Stat val : statListDb) {
             long hits = statListDb.stream().filter(endpointHit -> endpointHit.getUri().equals(val.getUri())).count();
-            statList.add(new ViewStats(val.getApp(), val.getUri(), hits));
+            statList.add(new ViewStats(val.getApp().getName(), val.getUri(), hits));
         }
-        logger.info("Get all stat by param start={}, end={}, uris={}, unique={}", start, end, uris, unique);
+        log.info("Get all stat by param start={}, end={}, uris={}, unique={}", start, end, uris, unique);
         return statList;
     }
 }

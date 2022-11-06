@@ -1,52 +1,46 @@
 package ru.practicum.ewm.compilations.service;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import ru.practicum.ewm.compilations.mapper.CompilationMapper;
 import ru.practicum.ewm.compilations.model.Compilation;
 import ru.practicum.ewm.compilations.repository.CompilationsRepository;
 import ru.practicum.ewm.exeption.BadRequestException;
 import ru.practicum.ewm.exeption.NotFoundException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import ru.practicum.ewm.compilations.dto.CompilationDto;
-
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
+@Slf4j
 public class PublicCompilationsServiceImpl implements PublicCompilationsService {
 
     private final CompilationsRepository repository;
-    private final Logger logger = LoggerFactory.getLogger(getClass());
-
-    @Autowired
-    public PublicCompilationsServiceImpl(CompilationsRepository repository) {
-        this.repository = repository;
-    }
 
     @Override
-    public List<CompilationDto> getAllCompilations(Boolean pinned, int from, int size) {
+    public List<CompilationDto> getAll(Boolean pinned, int from, int size) {
         Pageable pageable = PageRequest.of(from / size,size);
-        List<Compilation> compilationList;
-        logger.info("Get all compilations with parameter pinned={}", pinned);
+        List<Compilation> compilations;
         if (pinned == null) {
-            compilationList = repository.findAll(pageable).getContent();
+            compilations = repository.findAll(pageable).getContent();
         } else {
-            compilationList = repository.findAllByPinned(pinned,pageable);
+            compilations = repository.findAllByPinned(pinned,pageable);
         }
-        if (compilationList.isEmpty()) {
+        if (compilations.isEmpty()) {
             throw new BadRequestException(String.format("Compilation with pinned=%s not found", pinned));
         }
-        return compilationList.stream().map(CompilationMapper::toCompilationDto).collect(Collectors.toList());
+        log.info("Get all compilations with parameter pinned={}", pinned);
+        return CompilationMapper.toListDto(compilations);
     }
 
     @Override
-    public CompilationDto getCompilationById(Long compId) {
+    public CompilationDto getById(Long compId) {
         Compilation compilation = repository.findById(compId)
                   .orElseThrow(() -> new NotFoundException(String.format("Compilation with id=%s not found", compId)));
+        log.info("Get compilations by compId={}", compId);
             return CompilationMapper.toCompilationDto(compilation);
     }
 }

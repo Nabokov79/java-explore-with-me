@@ -1,5 +1,7 @@
 package ru.practicum.ewm.requests.service;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import ru.practicum.ewm.events.model.Event;
 import ru.practicum.ewm.events.model.State;
 import ru.practicum.ewm.events.repository.EventsRepository;
@@ -10,52 +12,38 @@ import ru.practicum.ewm.requests.model.Request;
 import ru.practicum.ewm.requests.model.Status;
 import ru.practicum.ewm.requests.repository.RequestsRepository;
 import ru.practicum.ewm.users.repository.UsersRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.practicum.ewm.requests.dto.ParticipationRequestDto;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
+import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
+@Slf4j
 public class PrivateRequestsServiceImpl implements PrivateRequestsService {
 
     private final RequestsRepository repository;
     private final EventsRepository eventsRepository;
     private final UsersRepository usersRepository;
-    private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    @Autowired
-    public PrivateRequestsServiceImpl(RequestsRepository repository,
-                                      EventsRepository eventsRepository,
-                                      UsersRepository usersRepository) {
-        this.repository = repository;
-        this.eventsRepository = eventsRepository;
-        this.usersRepository = usersRepository;
+    @Override
+    public List<ParticipationRequestDto> getByUserId(Long userId) {
+        List<ParticipationRequestDto> requests = RequestsMapper.toListDto(
+                                                              new ArrayList<>(repository.findAllByRequesterId(userId)));
+        log.info("Get list request by id={} ", userId);
+        return requests;
     }
 
     @Override
-    public List<ParticipationRequestDto> getRequestByUserId(Long userId) {
-        List<ParticipationRequestDto> requestDtoList = repository.findAllByRequesterId(userId).stream()
-                                                                         .map(RequestsMapper::toParticipationRequestDto)
-                                                                         .collect(Collectors.toList());
-        logger.info("Get list request by id={} ", userId);
-        return requestDtoList;
-    }
-
-    @Override
-    public ParticipationRequestDto addRequest(Long userId, Long eventId) {
+    public ParticipationRequestDto add(Long userId, Long eventId) {
         Event event = eventsRepository.findById(eventId)
                     .orElseThrow(() -> new NotFoundException(String.format("Event with id= %s was not found", userId)));
-        if (repository.findByRequesterIdAndEventId(userId, eventId).isPresent()) {
-            throw new BadRequestException(
-                    String.format("Bad request request with parameters userId= %s,eventId= %s found", userId, eventId));
+        Optional<Request> requestDb = repository.findByRequesterIdAndEventId(userId, eventId);
+        if (requestDb.isPresent()) {
+        return RequestsMapper.toParticipationRequestDto(requestDb.get());
         }
-
         if (event.getInitiator().getId() == userId) {
             throw new BadRequestException(
                           String.format("Bad request user is initiator event userId= %s,eventId= %s", userId, eventId));
@@ -77,26 +65,26 @@ public class PrivateRequestsServiceImpl implements PrivateRequestsService {
         request.setEvent(event);
         request.setRequester(usersRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException(String.format("User with id= %s was not found", userId))));
-        if (!event.getRequestModeration()) {
+        if (!event.isRequestModeration()) {
             request.setStatus(Status.CONFIRMED);
         }
         repository.save(request);
-        logger.info("Save request with userId={}, eventId={}", userId, eventId);
+        log.info("Save request with userId={}, eventId={}", userId, eventId);
+        log.info("Save request with userId={}, eventId={}",request.getRequester().getId(), request.getEvent().getId());
         return RequestsMapper.toParticipationRequestDto(request);
     }
 
     @Override
-    public ParticipationRequestDto cancelRequest(Long userId, Long requestId) {
-        List<Request> requestList = new ArrayList<>(repository.findByIdAndRequesterId(requestId, userId));
-        if (requestList.isEmpty()) {
+    public ParticipationRequestDto cancel(Long userId, Long requestId) {
+        Request request = repository.findByIdAndRequesterId(requestId, userId);
+        if (request == null) {
             throw new NotFoundException(
                     String.format("Request by parameters userId= %s, requestId= %s not found", userId, requestId)
             );
         }
-        Request request = requestList.get(0);
         request.setStatus(Status.CANCELED);
         repository.save(request);
-        logger.info("Get request with userId={}, requestId={}", userId, requestId);
+        log.info("Get request with userId={}, requestId={}", userId, requestId);
         return RequestsMapper.toParticipationRequestDto(request);
     }
 }
