@@ -23,11 +23,11 @@ public class Request {
     private long id;
     @Column(name = "created")
     private LocalDateTime created;
-    @ManyToOne
-    @JoinColumn(name = "event_id")
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "event_id", nullable = false)
     private Event event;
-    @ManyToOne
-    @JoinColumn(name = "requester_id")
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "requester_id",  nullable = false)
     private User requester;
     @Column(name = "status")
     @Enumerated(EnumType.STRING)
