@@ -1,7 +1,9 @@
 package ru.practicum.ewm.events.model;
 
+import org.hibernate.annotations.WhereJoinTable;
 import ru.practicum.ewm.categories.model.Category;
 import ru.practicum.ewm.compilations.model.Compilation;
+import ru.practicum.ewm.requests.model.Request;
 import ru.practicum.ewm.users.model.User;
 import lombok.*;
 
@@ -22,13 +24,13 @@ public class Event {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
-    @Column(name = "annotation")
+    @Column(name = "annotation", length = 2000)
     private String annotation;
 
     @Column(name = "description")
     private String description;
 
-    @Column(name = "event_date")
+    @Column(name = "event_date", length = 7000)
     private LocalDateTime eventDate;
 
     @Column(name = "created_on")
@@ -44,17 +46,17 @@ public class Event {
     private Integer participantLimit;
 
     @Column(name = "request_moderation")
-    private Boolean requestModeration;
+    private boolean requestModeration;
 
-    @Column(name = "title")
+    @Column(name = "title", length = 120)
     private String title;
 
-    @ManyToOne
-    @JoinColumn(name = "initiator_id")
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "initiator_id",  nullable = false)
     private User initiator;
 
-    @ManyToOne
-    @JoinColumn(name = "category_id")
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "category_id",  nullable = false)
     private Category category;
 
     @Column(name = "lat")
@@ -67,8 +69,15 @@ public class Event {
     @Enumerated(EnumType.STRING)
     private State state;
 
-    @ManyToMany(mappedBy = "eventsList")
-    List<Compilation> compilation;
+    @ManyToMany(mappedBy = "events")
+    private List<Compilation> compilation;
+
+    @OneToMany
+    @JoinTable( name = "requests",
+            joinColumns = @JoinColumn(name = "event_id"),
+            inverseJoinColumns = @JoinColumn(name = "id") )
+    @WhereJoinTable(clause = "status = 'CONFIRMED'")
+    private List<Request> confirmedRequests;
 
     @Override
     public boolean equals(Object o) {
