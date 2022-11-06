@@ -61,7 +61,5 @@ CREATE TABLE IF NOT EXISTS COMPILATIONS_EVENTS
 (
     compilation_id BIGINT,
     event_id       BIGINT,
-    CONSTRAINT FK_STUDENT_ID FOREIGN KEY (compilation_id) REFERENCES compilations (id)
-        MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE,
-    CONSTRAINT FK_UNIVERSITY_ID FOREIGN KEY (event_id) REFERENCES events (id)
+    CONSTRAINT pk_compilation_of_events PRIMARY KEY (compilation_id, event_id)
 )
