@@ -1,14 +1,15 @@
 package ru.practicum.ewm.compilations.mapper;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import ru.practicum.ewm.compilations.dto.CompilationDto;
 import ru.practicum.ewm.compilations.dto.NewCompilationDto;
 import ru.practicum.ewm.compilations.model.Compilation;
 import ru.practicum.ewm.events.mapper.EventMapper;
-import org.springframework.stereotype.Component;
-
+import java.util.List;
 import java.util.stream.Collectors;
 
-@Component
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class CompilationMapper {
 
     public static Compilation toCompilation(NewCompilationDto compilationDto) {
@@ -20,8 +21,12 @@ public class CompilationMapper {
 
     public static CompilationDto toCompilationDto(Compilation compilation) {
         return new CompilationDto(compilation.getId(),
-                compilation.getEventsList().stream().map(EventMapper::toEventShortDto).collect(Collectors.toList()),
+                compilation.getEvents().stream().map(EventMapper::toEventShortDto).collect(Collectors.toList()),
                 compilation.getPinned(),
                 compilation.getTitle());
+    }
+
+    public static List<CompilationDto> toListDto(List<Compilation> compilations) {
+        return compilations.stream().map(CompilationMapper::toCompilationDto).collect(Collectors.toList());
     }
 }
