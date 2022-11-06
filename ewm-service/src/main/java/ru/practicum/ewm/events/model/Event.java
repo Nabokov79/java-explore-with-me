@@ -73,9 +73,9 @@ public class Event {
     private List<Compilation> compilation;
 
     @OneToMany
-    @JoinTable( name = "requests",
+    @JoinTable(name = "requests",
             joinColumns = @JoinColumn(name = "event_id"),
-            inverseJoinColumns = @JoinColumn(name = "id") )
+            inverseJoinColumns = @JoinColumn(name = "id"))
     @WhereJoinTable(clause = "status = 'CONFIRMED'")
     private List<Request> confirmedRequests;
 
