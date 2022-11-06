@@ -9,7 +9,8 @@ import java.util.stream.Collectors;
 
 public class Param {
 
-    public static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
 
     public static ParamAdminRequest toParamAdminRequest(String users, String states, String categories,
                                                         String rangeStart, String rangeEnd) {
