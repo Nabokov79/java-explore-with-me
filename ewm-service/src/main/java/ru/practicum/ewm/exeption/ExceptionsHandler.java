@@ -48,12 +48,25 @@ public class ExceptionsHandler extends ResponseEntityExceptionHandler {
     protected ResponseEntity<Object> handleNotFound(BadRequestException ex, WebRequest request) {
         logger.error("Bad request error: {}", ex.getMessage(), ex);
         Map<String, Object> body = new LinkedHashMap<>();
-        body.put(ERROR, HttpStatus.BAD_REQUEST.getReasonPhrase());
+        body.put(ERROR, ex.getStackTrace());
         body.put(STATUS, HttpStatus.BAD_REQUEST.getReasonPhrase());
         body.put(REASONS, "For the requested operation the conditions are not met.");
         body.put(MESSAGE, ex.getMessage());
         body.put(TIMESTAMP, OffsetDateTime.now().format(DATE_TIME_FORMATTER));
         return handleExceptionInternal(ex, body, new HttpHeaders(), HttpStatus.BAD_REQUEST, request);
+    }
+
+    @ExceptionHandler(value = Throwable.class)
+    protected ResponseEntity<Object> handleInternalServerError(Throwable ex,
+                                                               HttpHeaders headers,
+                                                               HttpStatus status) {
+        logger.error("Internal server error: {}", ex.getMessage(), ex);
+        Map<String, Object> body = getGeneralErrorBody(HttpStatus.INTERNAL_SERVER_ERROR);
+        body.put(STATUS, HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase());
+        body.put(REASONS, "Error occurred.");
+        body.put(MESSAGE, ex.getMessage());
+        body.put(TIMESTAMP, OffsetDateTime.now().format(DATE_TIME_FORMATTER));
+        return new ResponseEntity<>(body, headers, status);
     }
 
     @ExceptionHandler(value = ConstraintViolationException.class)
