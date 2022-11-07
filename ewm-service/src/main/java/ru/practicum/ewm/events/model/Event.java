@@ -27,10 +27,10 @@ public class Event {
     @Column(name = "annotation", length = 2000)
     private String annotation;
 
-    @Column(name = "description")
+    @Column(name = "description", length = 7000)
     private String description;
 
-    @Column(name = "event_date", length = 7000)
+    @Column(name = "event_date")
     private LocalDateTime eventDate;
 
     @Column(name = "created_on")
