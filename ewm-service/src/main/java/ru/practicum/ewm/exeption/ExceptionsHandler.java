@@ -15,6 +15,7 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 import javax.validation.ConstraintViolationException;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -36,12 +37,7 @@ public class ExceptionsHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(value = NotFoundException.class)
     protected ResponseEntity<Object> handleNotFound(NotFoundException ex, WebRequest request) {
         logger.error("Not found error: {}", ex.getMessage(), ex);
-        Map<String, Object> body = new LinkedHashMap<>();
-        body.put(STATUS, HttpStatus.NOT_FOUND.getReasonPhrase());
-        body.put(REASONS, "The required object was not found.");
-        body.put(MESSAGE, ex.getMessage());
-        body.put(TIMESTAMP, OffsetDateTime.now().format(DATE_TIME_FORMATTER));
-        return handleExceptionInternal(ex, body, new HttpHeaders(), HttpStatus.NOT_FOUND, request);
+        return handleExceptionInternal(ex, getGeneralBody(ex.getMessage()), new HttpHeaders(), HttpStatus.NOT_FOUND, request);
     }
 
     @ExceptionHandler(value = BadRequestException.class)
@@ -54,6 +50,12 @@ public class ExceptionsHandler extends ResponseEntityExceptionHandler {
         body.put(MESSAGE, ex.getMessage());
         body.put(TIMESTAMP, OffsetDateTime.now().format(DATE_TIME_FORMATTER));
         return handleExceptionInternal(ex, body, new HttpHeaders(), HttpStatus.BAD_REQUEST, request);
+    }
+
+    @ExceptionHandler(value = DateTimeParseException.class)
+    protected ResponseEntity<Object> handleDataTime(DateTimeParseException ex, WebRequest request) {
+        logger.error("DateTime error: {}", ex.getMessage(), ex);
+        return handleExceptionInternal(ex, getGeneralBody(ex.getMessage()), new HttpHeaders(), HttpStatus.BAD_REQUEST, request);
     }
 
     @ExceptionHandler(value = Throwable.class)
@@ -100,6 +102,15 @@ public class ExceptionsHandler extends ResponseEntityExceptionHandler {
         body.put(TIMESTAMP, OffsetDateTime.now().format(DATE_TIME_FORMATTER));
         body.put(STATUS, status.value());
         body.put(ERROR, status.getReasonPhrase());
+        return body;
+    }
+
+    private Map<String, Object> getGeneralBody(String message) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put(STATUS, HttpStatus.BAD_REQUEST.getReasonPhrase());
+        body.put(REASONS, "For the requested operation the conditions are not met.");
+        body.put(MESSAGE, message);
+        body.put(TIMESTAMP, OffsetDateTime.now().format(DATE_TIME_FORMATTER));
         return body;
     }
 
