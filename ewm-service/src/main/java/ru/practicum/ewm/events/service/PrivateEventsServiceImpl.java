@@ -127,7 +127,7 @@ public class PrivateEventsServiceImpl implements PrivateEventsService {
                 .orElseThrow(() -> new NotFoundException(String.format("Request with id= %s was not found", userId)));
         Event event = get(eventId, userId);
         Set<Request> requestList = requestsRepository.findAllByEventId(eventId);
-        long countDb = requestsRepository.countAllByEventId(eventId);
+        long countDb = requestsRepository.countAllByEventIdAndStatus(eventId, Status.CONFIRMED);
         long count = Long.valueOf(event.getParticipantLimit());
         if (countDb < count) {
             requestDb.setStatus(Status.CONFIRMED);
@@ -135,6 +135,7 @@ public class PrivateEventsServiceImpl implements PrivateEventsService {
         }
         if (countDb == count) {
             requestList.forEach(request -> request.setCreated(event.getEventDate()));
+            requestList.forEach(request -> request.setStatus(Status.CANCELED));
             requestsRepository.saveAll(requestList);
         }
         requestsRepository.save(requestDb);
@@ -158,38 +159,34 @@ public class PrivateEventsServiceImpl implements PrivateEventsService {
     }
 
     private Event getModifiedEvent(Event eventDb, UpdateEventRequest eventRequest) {
+        checkRequestFields(eventRequest);
+        LocalDateTime eventDate = LocalDateTime.parse(eventRequest.getEventDate(), DATE_TIME_FORMATTER);
         if (!eventDb.getAnnotation().equals(eventRequest.getAnnotation())) {
             eventDb.setAnnotation(eventRequest.getAnnotation());
             log.info("Update annotation event new annotation={}", eventDb.getAnnotation());
         }
-
         if (eventDb.getCategory().getId() != eventRequest.getCategory()) {
             eventDb.setCategory(categoriesRepository.findById(eventRequest.getCategory())
                     .orElseThrow(() -> new NotFoundException(
                             String.format("Category with id= %s not found", eventRequest.getCategory()))));
             log.info("Update category event, new category catIa={}", eventDb.getCategory().getId());
         }
-
         if (!eventDb.getDescription().equals(eventRequest.getDescription())) {
             eventDb.setDescription(eventRequest.getDescription());
             log.info("Update description event, new annotation={}", eventDb.getDescription());
         }
-
-        if (!eventDb.getEventDate().isEqual(LocalDateTime.parse(eventRequest.getEventDate(), DATE_TIME_FORMATTER))) {
-            eventDb.setEventDate(LocalDateTime.parse(eventRequest.getEventDate(), DATE_TIME_FORMATTER));
+        if (!eventDb.getEventDate().isEqual(eventDate)) {
+            eventDb.setEventDate(eventDate);
             log.info("Update event date new dataTime={}", eventDb.getEventDate());
         }
-
-        if (!eventDb.getPaid().equals(eventRequest.isPaid())) {
-            eventDb.setPaid(eventRequest.isPaid());
+        if (!eventDb.getPaid().equals(eventRequest.getPaid())) {
+            eventDb.setPaid(eventRequest.getPaid());
             log.info("Update paid event, new paid={}", eventDb.getPaid());
         }
-
         if (!Objects.equals(eventDb.getParticipantLimit(), eventRequest.getParticipantLimit())) {
             eventDb.setParticipantLimit(eventRequest.getParticipantLimit());
             log.info("Update participant limit event, new limit={}", eventDb.getParticipantLimit());
         }
-
         if (!eventDb.getTitle().equals(eventRequest.getTitle().toLowerCase())) {
             eventDb.setTitle(eventRequest.getTitle());
             log.info("Update title event, new title={}", eventDb.getTitle());
@@ -205,6 +202,27 @@ public class PrivateEventsServiceImpl implements PrivateEventsService {
             throw new NotFoundException(String.format("Event not found with userId=%s, eventId=%s", userId, eventId));
         } else {
            return eventDb.get();
+        }
+    }
+
+    private void checkRequestFields(UpdateEventRequest eventRequest) {
+        if (eventRequest.getAnnotation().isEmpty()) {
+            throw new BadRequestException("Annotation is empty");
+        }
+        if (eventRequest.getDescription().isEmpty()) {
+            throw new BadRequestException("Description is empty");
+        }
+        if (eventRequest.getTitle().isEmpty()) {
+            throw new BadRequestException("Title is empty");
+        }
+        if (eventRequest.getCategory() == 0) {
+            throw new BadRequestException("Category id is null");
+        }
+        if (eventRequest.getPaid() == null) {
+            throw new BadRequestException("Paid is empty");
+        }
+        if (eventRequest.getParticipantLimit() == null) {
+            throw new BadRequestException("tParticipant limit is empty");
         }
     }
 }

@@ -2,6 +2,7 @@ package ru.practicum.ewm.compilations.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import ru.practicum.ewm.compilations.dto.CompilationDto;
 import ru.practicum.ewm.compilations.mapper.CompilationMapper;
 import ru.practicum.ewm.compilations.model.Compilation;
 import ru.practicum.ewm.compilations.repository.CompilationsRepository;
@@ -10,7 +11,7 @@ import ru.practicum.ewm.exeption.NotFoundException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import ru.practicum.ewm.compilations.dto.CompilationDto;
+
 import java.util.List;
 
 @Service

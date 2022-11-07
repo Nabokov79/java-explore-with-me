@@ -30,7 +30,7 @@ public class PublicEventsServiceImpl implements PublicEventsService {
 
     private final EventsRepository repository;
     private final EventClient eventClient;
-    private static final String MAIN_SERVICE = "MainService";
+    private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     @Override
     public List<EventShortDto> getAll(ParamUserRequest param, int from, int size, HttpServletRequest request) {
@@ -43,7 +43,7 @@ public class PublicEventsServiceImpl implements PublicEventsService {
         if (param.getPaid() != null) {
             booleanBuilder.and(QEvent.event.paid.eq(param.getPaid()));
         }
-        if (param.getText() != null) {
+        if (param.getText().isBlank()) {
             String text = param.getText();
             booleanBuilder.and((QEvent.event.annotation.containsIgnoreCase(text)
                     .or(QEvent.event.description.containsIgnoreCase(text))));
@@ -86,11 +86,8 @@ public class PublicEventsServiceImpl implements PublicEventsService {
     }
 
     private void saveStat(HttpServletRequest request) {
-        eventClient.saveStat(new EndpointHit(MAIN_SERVICE, request.getRequestURI(),
-                                                           request.getRemoteAddr(),
-                                                           LocalDateTime.now().format(
-                                                                   DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
-                                                                                    ));
+        eventClient.saveStat(request.getRequestURI(), request.getRemoteAddr(),
+                                                        LocalDateTime.now().format(DATE_TIME_FORMATTER));
     }
 
     private long getStatByUri(String uri) {

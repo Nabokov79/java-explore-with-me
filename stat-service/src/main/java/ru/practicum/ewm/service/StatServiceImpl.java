@@ -15,6 +15,9 @@ import ru.practicum.ewm.model.Stat;
 import ru.practicum.ewm.repository.AppRepository;
 import ru.practicum.ewm.repository.StatRepository;
 import org.springframework.stereotype.Service;
+
+import javax.persistence.EntityManager;
+import javax.swing.text.html.parser.Entity;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -24,6 +27,7 @@ import java.util.*;
 public class StatServiceImpl implements StatService {
     private final StatRepository repository;
     private final AppRepository appRepository;
+    private final EntityManager em;
 
     @Override
     public void saveStat(EndpointHit endpointHit) {
