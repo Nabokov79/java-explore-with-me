@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping(path = "/admin/categories")
-@Validated
 @RequiredArgsConstructor
 public class AdminCategoriesController {
 

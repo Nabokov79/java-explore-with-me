@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping(path = "/admin/compilations")
-@Validated
 @RequiredArgsConstructor
 public class AdminCompilationsController {
 

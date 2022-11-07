@@ -17,6 +17,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping(path = "/users/{userId}/events")
+@Validated
 @RequiredArgsConstructor
 public class PrivateEventsController {
 

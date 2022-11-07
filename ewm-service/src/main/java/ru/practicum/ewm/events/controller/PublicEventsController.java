@@ -1,6 +1,7 @@
 package ru.practicum.ewm.events.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.validation.annotation.Validated;
 import ru.practicum.ewm.events.dto.EventFullDto;
 import ru.practicum.ewm.events.dto.EventShortDto;
 import ru.practicum.ewm.paramRequest.ParamUserRequest;
@@ -15,6 +16,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping(path = "/events")
+@Validated
 @RequiredArgsConstructor
 public class PublicEventsController {
 
