@@ -25,7 +25,7 @@ public interface RequestsRepository extends JpaRepository<Request, Long> {
 
     Set<Request> findAllByEventId(Long eventId);
 
-    Long countAllByEventId(long eventId);
+    Long countAllByEventIdAndStatus(long eventId, Status status);
 
     Long countAllByEventIdAndStatus(Long eventId, Status status);
 }
