@@ -12,7 +12,7 @@ import javax.validation.constraints.NotNull;
 @AllArgsConstructor
 public class CategoryDto {
 
-    @NotNull(groups = {Update.class}, message = "id should not null")
+    @NotNull(groups = {Update.class})
     private Long id;
     @NotBlank(groups = {Update.class}, message = "name should not be blank")
     private String name;
