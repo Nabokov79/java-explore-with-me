@@ -38,7 +38,7 @@ public class EventMapper {
         return event;
     }
 
-    public static EventFullDto toEventFullDto(Event event) {
+    public static EventFullDto toEventFullDto(Event event, Long views) {
         return new EventFullDto(event.getId(),
                                 event.getAnnotation(),
                                 CategoriesMapper.toCategoryDto(event.getCategory()),
@@ -55,7 +55,7 @@ public class EventMapper {
                                 event.isRequestModeration(),
                                 event.getState(),
                                 event.getTitle(),
-                                null);
+                                views);
     }
 
     public static EventShortDto toEventShortDto(Event event) {

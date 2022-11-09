@@ -17,10 +17,10 @@ public class RequestsMapper {
 
     public static ParticipationRequestDto toParticipationRequestDto(Request request) {
         return new ParticipationRequestDto(request.getId(),
-                                            request.getCreated().format(DATE_TIME_FORMATTER),
-                                            request.getEvent() != null ? request.getEvent().getId() : null,
                                             request.getRequester() != null ? request.getRequester().getId() : null,
-                                            request.getStatus().toString());
+                                            request.getEvent() != null ? request.getEvent().getId() : null,
+                                            request.getStatus().toString(),
+                                            request.getCreated().format(DATE_TIME_FORMATTER));
     }
 
     public static Request toRequest() {
