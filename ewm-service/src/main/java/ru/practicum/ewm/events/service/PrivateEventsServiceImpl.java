@@ -95,7 +95,7 @@ public class PrivateEventsServiceImpl implements PrivateEventsService {
     @Override
     public EventFullDto getInfoCurrentUser(Long userId, Long eventId, HttpServletRequest request) {
         Event event = get(eventId, userId);
-        EventFullDto eventFullDto =EventMapper.toEventFullDto(event, getViews(request.getRequestURI()));
+        EventFullDto eventFullDto = EventMapper.toEventFullDto(event, getViews(request.getRequestURI()));
         eventFullDto.setConfirmedRequests(requestsRepository.countAllByEventIdAndStatus(eventId, Status.CONFIRMED));
         log.info("Get event info current user userId={}", userId);
         return eventFullDto;

@@ -115,6 +115,7 @@ public class AdminEventsServiceImpl implements AdminEventsService {
         return repository.findById(eventId)
                 .orElseThrow(() ->  new NotFoundException(String.format("Event not found by id=%s", eventId)));
     }
+
     private long getViews(String uri) {
         Object stat = eventClient.getStat("","", uri, false).getBody();
         return Arrays.asList(stat, EndpointHit.class).size();
