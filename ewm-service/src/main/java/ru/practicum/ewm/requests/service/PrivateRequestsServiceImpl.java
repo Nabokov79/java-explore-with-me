@@ -38,23 +38,23 @@ public class PrivateRequestsServiceImpl implements PrivateRequestsService {
 
     @Override
     public ParticipationRequestDto add(Long userId, Long eventId) {
+        log.info("SAVE REQUEST event with userId={}, eventId={}", userId, eventId);
         Event event = eventsRepository.findById(eventId)
                     .orElseThrow(() -> new NotFoundException(String.format("Event with id= %s was not found", userId)));
         Optional<Request> requestDb = repository.findByRequesterIdAndEventId(userId, eventId);
         if (requestDb.isPresent()) {
+            log.info("Save request isPresent event with userId={}, eventId={}", userId, eventId);
         return RequestsMapper.toParticipationRequestDto(requestDb.get());
         }
         if (event.getInitiator().getId() == userId) {
             throw new BadRequestException(
                           String.format("Bad request user is initiator event userId= %s,eventId= %s", userId, eventId));
         }
-
         if (!event.getState().equals(State.PUBLISHED)) {
             throw new BadRequestException(
                     String.format("Bad request with parameters userId= %s,eventId= %s< state=%s", userId, eventId,
                                                                                                      event.getState()));
         }
-
         if (Objects.equals(Long.valueOf(event.getParticipantLimit()), repository.countAllByEventIdAndStatus(eventId,
                                                                                                    Status.CONFIRMED))) {
             throw new BadRequestException(
@@ -68,10 +68,10 @@ public class PrivateRequestsServiceImpl implements PrivateRequestsService {
         if (!event.isRequestModeration()) {
             request.setStatus(Status.CONFIRMED);
         }
-        repository.save(request);
         log.info("Save request with userId={}, eventId={}", userId, eventId);
-        log.info("Save request with userId={}, eventId={}",request.getRequester().getId(), request.getEvent().getId());
-        return RequestsMapper.toParticipationRequestDto(request);
+        ParticipationRequestDto request1 =  RequestsMapper.toParticipationRequestDto(repository.save(request));
+        log.info("Save request with Id={}, eventId={}, userId={}", request1.getId(), request1.getEvent(), request1.getRequester());
+        return request1;
     }
 
     @Override

@@ -31,7 +31,6 @@ public class PublicEventsServiceImpl implements PublicEventsService {
     private final EventsRepository repository;
     private final EventClient eventClient;
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-
     @Override
     public List<EventShortDto> getAll(ParamUserRequest param, int from, int size, HttpServletRequest request) {
         Pageable pageable = PageRequest.of(from / size, size);
@@ -79,8 +78,7 @@ public class PublicEventsServiceImpl implements PublicEventsService {
         Event event = repository.findById(id)
                 .orElseThrow(() -> new NotFoundException(String.format("Event not found by id=%s", id)));
         saveStat(request);
-        EventFullDto eventFullDto = EventMapper.toEventFullDto(event);
-        eventFullDto.setViews(getStatByUri(request.getRequestURI()));
+        EventFullDto eventFullDto = EventMapper.toEventFullDto(event, getStatByUri(request.getRequestURI()));
         log.info("Get event by id={}", id);
         return eventFullDto;
     }

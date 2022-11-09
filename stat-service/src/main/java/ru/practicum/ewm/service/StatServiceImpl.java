@@ -15,7 +15,6 @@ import ru.practicum.ewm.model.Stat;
 import ru.practicum.ewm.repository.AppRepository;
 import ru.practicum.ewm.repository.StatRepository;
 import org.springframework.stereotype.Service;
-import javax.persistence.EntityManager;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -25,7 +24,6 @@ import java.util.*;
 public class StatServiceImpl implements StatService {
     private final StatRepository repository;
     private final AppRepository appRepository;
-    private final EntityManager em;
 
     @Override
     public void saveStat(EndpointHit endpointHit) {
@@ -54,7 +52,6 @@ public class StatServiceImpl implements StatService {
         } else {
             statListDb = repository.findAllByUri(uris);
         }
-
         if (unique) {
             statListDb = new ArrayList<>(new TreeSet<>(statListDb));
         }
