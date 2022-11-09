@@ -1,8 +1,6 @@
 package ru.practicum.ewm.events.controller;
 
 import lombok.RequiredArgsConstructor;
-import ru.practicum.ewm.common.Create;
-import ru.practicum.ewm.common.Update;
 import ru.practicum.ewm.events.dto.EventFullDto;
 import ru.practicum.ewm.events.dto.NewEventDto;
 import ru.practicum.ewm.events.dto.UpdateEventRequest;
@@ -11,6 +9,8 @@ import ru.practicum.ewm.events.service.PrivateEventsService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.Positive;
 import javax.validation.constraints.PositiveOrZero;
 import java.util.List;
@@ -26,30 +26,35 @@ public class PrivateEventsController {
     @GetMapping
     public ResponseEntity<List<EventFullDto>> getByUserId(@PathVariable Long userId,
                                               @PositiveOrZero @RequestParam(name = "from", defaultValue = "0") int from,
-                                              @Positive @RequestParam(name = "size", defaultValue = "10") int size) {
-        return ResponseEntity.ok().body(service.getByUserId(userId, from, size));
+                                              @Positive @RequestParam(name = "size", defaultValue = "10") int size,
+                                                          HttpServletRequest request) {
+        return ResponseEntity.ok().body(service.getByUserId(userId, from, size, request));
     }
 
     @PatchMapping
     public ResponseEntity<EventFullDto> changeByUserId(@PathVariable Long userId,
-                                              @Validated({Update.class}) @RequestBody UpdateEventRequest eventRequest) {
-        return ResponseEntity.ok().body(service.changeByUserId(userId, eventRequest));
+                                              @Validated @RequestBody UpdateEventRequest eventRequest,
+                                                       HttpServletRequest request) {
+        return ResponseEntity.ok().body(service.changeByUserId(userId, eventRequest, request));
     }
 
     @PostMapping
     public ResponseEntity<EventFullDto> create(@PathVariable Long userId,
-                                                    @Validated({Create.class}) @RequestBody NewEventDto newEventDto) {
-        return ResponseEntity.ok().body(service.create(userId, newEventDto));
+                                                    @Validated @RequestBody NewEventDto newEventDto,
+                                               HttpServletRequest request) {
+        return ResponseEntity.ok().body(service.create(userId, newEventDto, request));
     }
 
     @GetMapping("/{eventId}")
-    public ResponseEntity<EventFullDto> getInfoCurrentUser(@PathVariable Long userId, @PathVariable Long eventId) {
-        return ResponseEntity.ok().body(service.getInfoCurrentUser(userId,eventId));
+    public ResponseEntity<EventFullDto> getInfoCurrentUser(@PathVariable Long userId, @PathVariable Long eventId,
+                                                           HttpServletRequest request) {
+        return ResponseEntity.ok().body(service.getInfoCurrentUser(userId,eventId, request));
     }
 
     @PatchMapping("/{eventId}")
-    public ResponseEntity<EventFullDto> cancel(@PathVariable Long userId, @PathVariable Long eventId) {
-        return ResponseEntity.ok().body(service.cancel(userId,eventId));
+    public ResponseEntity<EventFullDto> cancel(@PathVariable Long userId, @PathVariable Long eventId,
+                                               HttpServletRequest request) {
+        return ResponseEntity.ok().body(service.cancel(userId,eventId, request));
     }
 
     @GetMapping("/{eventId}/requests")

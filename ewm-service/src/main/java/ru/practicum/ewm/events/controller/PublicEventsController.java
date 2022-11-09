@@ -23,12 +23,12 @@ public class PublicEventsController {
     private final PublicEventsService service;
 
     @GetMapping
-    public ResponseEntity<List<EventShortDto>> getAll(@RequestParam String text,
-                                                            @RequestParam String categories,
-                                                            @RequestParam Boolean paid,
-                                                            @RequestParam String rangeStart,
-                                                            @RequestParam String rangeEnd,
-                                                            @RequestParam Boolean onlyAvailable,
+    public ResponseEntity<List<EventShortDto>> getAll(@RequestParam(required = false) String text,
+                                                      @RequestParam(required = false) List<Long> categories,
+                                                      @RequestParam(required = false) Boolean paid,
+                                                      @RequestParam(required = false) String rangeStart,
+                                                      @RequestParam(required = false) String rangeEnd,
+                                                      @RequestParam(required = false) Boolean onlyAvailable,
                                               @RequestParam(name = "sort", defaultValue = "EVENT_DATE") String sort,
                                               @PositiveOrZero @RequestParam(name = "from", defaultValue = "0") int from,
                                               @Positive @RequestParam(name = "size", defaultValue = "10") int size,

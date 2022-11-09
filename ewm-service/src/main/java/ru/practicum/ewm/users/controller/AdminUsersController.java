@@ -1,7 +1,6 @@
 package ru.practicum.ewm.users.controller;
 
 import lombok.RequiredArgsConstructor;
-import ru.practicum.ewm.common.Create;
 import ru.practicum.ewm.users.dto.NewUserRequest;
 import ru.practicum.ewm.users.dto.UserDto;
 import ru.practicum.ewm.users.service.AdminUsersService;
@@ -28,7 +27,7 @@ public class AdminUsersController {
     }
 
     @PostMapping
-    public ResponseEntity<UserDto> create(@Validated({Create.class}) @RequestBody NewUserRequest newUser) {
+    public ResponseEntity<UserDto> create(@Validated @RequestBody NewUserRequest newUser) {
         return ResponseEntity.ok().body(service.create(newUser));
     }
 

@@ -1,7 +1,6 @@
 package ru.practicum.ewm.compilations.controller;
 
 import lombok.RequiredArgsConstructor;
-import ru.practicum.ewm.common.Create;
 import ru.practicum.ewm.compilations.dto.CompilationDto;
 import ru.practicum.ewm.compilations.dto.NewCompilationDto;
 import ru.practicum.ewm.compilations.service.AdminCompilationsService;
@@ -17,7 +16,7 @@ public class AdminCompilationsController {
     private final AdminCompilationsService service;
 
     @PostMapping
-    public ResponseEntity<CompilationDto> add(@Validated({Create.class}) @RequestBody NewCompilationDto compilation) {
+    public ResponseEntity<CompilationDto> add(@Validated @RequestBody NewCompilationDto compilation) {
         return ResponseEntity.ok().body(service.add(compilation));
     }
 
