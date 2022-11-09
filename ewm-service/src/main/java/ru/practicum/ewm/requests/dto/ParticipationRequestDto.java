@@ -10,8 +10,8 @@ import lombok.Setter;
 public class ParticipationRequestDto {
 
     private Long id;
-    private String created;
-    private Long event;
     private Long requester;
+    private Long event;
     private String status;
+    private String created;
 }

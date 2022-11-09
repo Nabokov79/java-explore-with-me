@@ -1,6 +1,5 @@
 package ru.practicum.ewm.categories.dto;
 
-import ru.practicum.ewm.common.Create;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -14,6 +13,6 @@ import javax.validation.constraints.NotBlank;
 @AllArgsConstructor
 public class NewCategoryDto {
 
-    @NotBlank(groups = {Create.class}, message = "name category should not be blank")
+    @NotBlank(message = "name category should not be blank")
     private String name;
 }
