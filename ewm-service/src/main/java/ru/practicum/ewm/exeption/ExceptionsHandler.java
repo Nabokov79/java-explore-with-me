@@ -2,7 +2,6 @@ package ru.practicum.ewm.exeption;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -10,105 +9,93 @@ import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.context.request.WebRequest;
-import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 import javax.validation.ConstraintViolationException;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 @ControllerAdvice
-public class ExceptionsHandler extends ResponseEntityExceptionHandler {
+public class ExceptionsHandler {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
-
     private static final String TIMESTAMP = "timestamp";
     private static final String STATUS = "status";
-    private static final String ERROR = "error";
+    private static final String ERRORS = "errors";
     private static final String REASONS = "reasons";
     private static final String MESSAGE = "massage";
     public static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-    @ExceptionHandler(value = NotFoundException.class)
-    protected ResponseEntity<Object> handleNotFound(NotFoundException ex, WebRequest request) {
-        logger.error("Not found error: {}", ex.getMessage(), ex);
-        return handleExceptionInternal(ex, getGeneralBody(ex.getMessage()), new HttpHeaders(), HttpStatus.NOT_FOUND, request);
-    }
-
     @ExceptionHandler(value = BadRequestException.class)
-    protected ResponseEntity<Object> handleNotFound(BadRequestException ex, WebRequest request) {
-        logger.error("Bad request error: {}", ex.getMessage(), ex);
+    protected ResponseEntity<Object> handleBadRequest(BadRequestException ex) {
         Map<String, Object> body = new LinkedHashMap<>();
-        body.put(ERROR, ex.getStackTrace());
-        body.put(STATUS, HttpStatus.BAD_REQUEST.getReasonPhrase());
+        body.put(ERRORS, ex.getStackTrace());
+        body.put(MESSAGE, ex.getMessage());
         body.put(REASONS, "For the requested operation the conditions are not met.");
-        body.put(MESSAGE, ex.getMessage());
+        body.put(STATUS, HttpStatus.BAD_REQUEST.getReasonPhrase());
         body.put(TIMESTAMP, OffsetDateTime.now().format(DATE_TIME_FORMATTER));
-        return handleExceptionInternal(ex, body, new HttpHeaders(), HttpStatus.BAD_REQUEST, request);
+        logger.error("Bad request error: {}", ex.getMessage(), ex);
+        return ResponseEntity.badRequest().body(body);
     }
 
-    @ExceptionHandler(value = DateTimeParseException.class)
-    protected ResponseEntity<Object> handleDataTime(DateTimeParseException ex, WebRequest request) {
-        logger.error("DateTime error: {}", ex.getMessage(), ex);
-        return handleExceptionInternal(ex, getGeneralBody(ex.getMessage()), new HttpHeaders(), HttpStatus.BAD_REQUEST, request);
+    @ExceptionHandler(value = NotFoundException.class)
+    protected ResponseEntity<Object> handleNotFound(NotFoundException ex) {
+        Map<String, Object> body = getGeneralBody(HttpStatus.CONFLICT.getReasonPhrase(),
+                                            "The required object was not found.",
+                                                   ex.getMessage());
+        logger.error("Not found error: {}", ex.getMessage(), ex);
+        return new ResponseEntity<>(body,HttpStatus.NOT_FOUND);
     }
 
-    @ExceptionHandler(value = Throwable.class)
-    protected ResponseEntity<Object> handleInternalServerError(Throwable ex,
-                                                               HttpHeaders headers,
-                                                               HttpStatus status) {
-        logger.error("Internal server error: {}", ex.getMessage(), ex);
-        Map<String, Object> body = getGeneralErrorBody(HttpStatus.INTERNAL_SERVER_ERROR);
-        body.put(STATUS, HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase());
-        body.put(REASONS, "Error occurred.");
-        body.put(MESSAGE, ex.getMessage());
-        body.put(TIMESTAMP, OffsetDateTime.now().format(DATE_TIME_FORMATTER));
-        return new ResponseEntity<>(body, headers, status);
-    }
-
-    @ExceptionHandler(value = ConstraintViolationException.class)
-    protected ResponseEntity<Object> constraintViolationException(ConstraintViolationException ex, WebRequest request) {
-        logger.error("Constraint error: {}", ex.getMessage(), ex);
-        Map<String, Object> body = getGeneralErrorBody(HttpStatus.BAD_REQUEST);
-        List<String> errors = Arrays.stream(ex.getMessage().split(", "))
-                                    .collect(Collectors.toList());
-        body.put(REASONS, errors);
-        return handleExceptionInternal(ex, body, new HttpHeaders(), HttpStatus.BAD_REQUEST, request);
-    }
-
-    @Override
-    protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex,
-                                                                  HttpHeaders headers,
-                                                                  HttpStatus status,
-                                                                  WebRequest request) {
-        logger.error("Not Valid. Message: {}", ex.getMessage(), ex);
-        Map<String, Object> body = getGeneralErrorBody(status);
+    @ExceptionHandler(value = MethodArgumentNotValidException.class)
+    protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex) {
+        Map<String, Object> body = new LinkedHashMap<>();
         List<String> errors = ex.getBindingResult()
                 .getAllErrors()
                 .stream()
-                .map(this::getErrorString)
-                .collect(Collectors.toList());
-        body.put(REASONS, errors);
-        return new ResponseEntity<>(body, headers, status);
-    }
-
-    private Map<String, Object> getGeneralErrorBody(HttpStatus status) {
-        Map<String, Object> body = new LinkedHashMap<>();
+                .map(this::getErrorString).collect(Collectors.toList());
+        body.put(ERRORS, errors);
+        body.put(MESSAGE, ex.getMessage());
+        body.put(REASONS, "Integrity constraint has been violated.");
+        body.put(STATUS, HttpStatus.CONFLICT.getReasonPhrase());
         body.put(TIMESTAMP, OffsetDateTime.now().format(DATE_TIME_FORMATTER));
-        body.put(STATUS, status.value());
-        body.put(ERROR, status.getReasonPhrase());
-        return body;
+        logger.error("Not valid argument: {}", ex.getMessage(), ex);
+        return ResponseEntity.badRequest().body(body);
     }
 
-    private Map<String, Object> getGeneralBody(String message) {
+    @ExceptionHandler(value = ConstraintViolationException.class)
+    protected ResponseEntity<Object> constraintViolationException(ConstraintViolationException ex) {
+        Map<String, Object> body = getGeneralBody(HttpStatus.CONFLICT.getReasonPhrase(),
+                                            "Integrity constraint has been violated.",
+                                                   ex.getMessage());
+        logger.error("Not valid error: {}", ex.getMessage(), ex);
+        return ResponseEntity.badRequest().body(body);
+    }
+
+    @ExceptionHandler(value = Throwable.class)
+    protected ResponseEntity<Object> handleInternalServerError(Throwable ex) {
+        Map<String, Object> body = getGeneralBody(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),
+                                           "Error occurred.", ex.getMessage());
+        logger.error("Internal server error: {}", ex.getMessage(), ex);
+        return ResponseEntity.internalServerError().body(body);
+    }
+
+    @ExceptionHandler(value = DateTimeParseException.class)
+    protected ResponseEntity<Object> handleDataTime(DateTimeParseException ex) {
+        Map<String, Object> body = getGeneralBody(HttpStatus.CONFLICT.getReasonPhrase(),
+                                            "Error occurred.",
+                                                  ex.getMessage());
+        logger.error("DateTime error: {}", ex.getMessage(), ex);
+        return ResponseEntity.badRequest().body(body);
+    }
+
+    private Map<String, Object> getGeneralBody(String status, String reason, String message) {
         Map<String, Object> body = new LinkedHashMap<>();
-        body.put(STATUS, HttpStatus.BAD_REQUEST.getReasonPhrase());
-        body.put(REASONS, "For the requested operation the conditions are not met.");
+        body.put(STATUS, status);
+        body.put(REASONS, reason);
         body.put(MESSAGE, message);
         body.put(TIMESTAMP, OffsetDateTime.now().format(DATE_TIME_FORMATTER));
         return body;
