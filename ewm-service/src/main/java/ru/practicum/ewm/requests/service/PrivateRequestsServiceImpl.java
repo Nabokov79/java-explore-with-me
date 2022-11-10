@@ -39,6 +39,10 @@ public class PrivateRequestsServiceImpl implements PrivateRequestsService {
     @Override
     public ParticipationRequestDto add(Long userId, Long eventId) {
         log.info("SAVE REQUEST event with userId={}, eventId={}", userId, eventId);
+        if (eventId == null) {
+            throw new BadRequestException(
+                    String.format("Bad request with parameters eventId= %s", eventId));
+        }
         Event event = eventsRepository.findById(eventId)
                     .orElseThrow(() -> new NotFoundException(String.format("Event with id= %s was not found", userId)));
         Optional<Request> requestDb = repository.findByRequesterIdAndEventId(userId, eventId);
@@ -58,7 +62,7 @@ public class PrivateRequestsServiceImpl implements PrivateRequestsService {
         if (Objects.equals(Long.valueOf(event.getParticipantLimit()), repository.countAllByEventIdAndStatus(eventId,
                                                                                                    Status.CONFIRMED))) {
             throw new BadRequestException(
-                    String.format("Bad request  participant limit with parameters userId= %s,eventId= %s, " +
+                    String.format("Bad request participant limit with parameters userId= %s,eventId= %s, " +
                                                    "participantLimit=%s", userId, eventId,event.getParticipantLimit()));
         }
         Request request = RequestsMapper.toRequest();
@@ -69,7 +73,7 @@ public class PrivateRequestsServiceImpl implements PrivateRequestsService {
             request.setStatus(Status.CONFIRMED);
         }
         log.info("Save request with userId={}, eventId={}", userId, eventId);
-        ParticipationRequestDto request1 =  RequestsMapper.toParticipationRequestDto(repository.save(request));
+        ParticipationRequestDto request1 = RequestsMapper.toParticipationRequestDto(repository.save(request));
         log.info("Save request with Id={}, eventId={}, userId={}", request1.getId(), request1.getEvent(), request1.getRequester());
         return request1;
     }
