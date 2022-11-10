@@ -13,21 +13,21 @@ import java.util.Objects;
 @AllArgsConstructor
 public class UpdateEventRequest {
 
-    @Size(min = 20, message = "min annotation length is 20 characters")
-    @Size(max = 2000, message = "max annotation length is 2000 characters")
+    @Size(min = 20, message = "min length is 20 characters")
+    @Size(max = 2000, message = "max length is 2000 characters")
     private String annotation;
     private Long category;
-    @Size(min = 20, message = "min description length is 20 characters")
-    @Size(max = 7000, message = "max description length is 7000 characters")
+    @Size(min = 20, message = "min length is 20 characters")
+    @Size(max = 7000, message = "max length is 7000 characters")
     private String description;
     private String eventDate;
-    @NotNull(message = "id should not null")
+    @NotNull(message = "should not null")
     private Long eventId;
     private Boolean paid;
-    @PositiveOrZero(message = "participant limit not positive")
+    @PositiveOrZero(message = "not positive")
     private Integer participantLimit;
-    @Size(min = 3, message = "min title length is 3 characters")
-    @Size(max = 120, message = "max title length is 120 characters")
+    @Size(min = 3, message = "min length is 3 characters")
+    @Size(max = 120, message = "max length is 120 characters")
     private String title;
 
     @Override

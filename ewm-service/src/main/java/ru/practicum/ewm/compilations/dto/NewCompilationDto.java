@@ -13,6 +13,6 @@ public class NewCompilationDto {
 
     private List<Long> events;
     private Boolean pinned;
-    @NotBlank(message = "title compilation should not be blank")
+    @NotBlank(message = "compilation should not be blank")
     private String title;
 }
