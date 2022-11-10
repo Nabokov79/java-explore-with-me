@@ -25,11 +25,11 @@ public class AdminEventsController {
     private final AdminEventsService service;
 
     @GetMapping
-    public ResponseEntity<List<EventFullDto>> search(@RequestParam List<Long> users,
+    public ResponseEntity<List<EventFullDto>> search(@RequestParam(required = false) List<Long> users,
                                                      @RequestParam(required = false) List<State> states,
                                                      @RequestParam(required = false) List<Long> categories,
                                                      @RequestParam(required = false) String rangeStart,
-                                                     @RequestParam String rangeEnd,
+                                                     @RequestParam(required = false) String rangeEnd,
                             @PositiveOrZero @RequestParam(name = "from", defaultValue = "0", required = false) int from,
                             @Positive @RequestParam(name = "size", defaultValue = "10", required = false) int size,
                                                      HttpServletRequest request) {
