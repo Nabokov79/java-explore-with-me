@@ -10,6 +10,6 @@ import java.util.List;
 
 public interface StatRepository extends JpaRepository<Stat, Long>, QuerydslPredicateExecutor<Stat> {
 
-    @Query("select e from Stat e where e.uri in :urisList")
-    List<Stat> findAllByUri(@Param("urisList") List<String> urisList);
+    @Query("select e from Stat e where e.uri in :uris")
+    List<Stat> findAllByUri(@Param("uris") List<String> uris);
 }
