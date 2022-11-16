@@ -1,65 +1,41 @@
 package ru.practicum.ewm.client;
 
 import java.util.List;
-import java.util.Map;
+import java.util.Objects;
 
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.lang.Nullable;
-import org.springframework.web.client.HttpStatusCodeException;
-import org.springframework.web.client.RestTemplate;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+import org.springframework.web.reactive.function.client.WebClient;
+import ru.practicum.ewm.events.dto.ViewStats;
 
+
+@Component
+@RequiredArgsConstructor
 public class StatClient {
+    private final WebClient webClient;
 
-    protected final RestTemplate rest;
-
-    public StatClient(RestTemplate rest) {
-        this.rest = rest;
+    public void post(String path, EndpointHit endpointHit) {
+        webClient.post()
+                .uri(path)
+                .bodyValue(endpointHit)
+                .retrieve()
+                .toBodilessEntity()
+                .block();
     }
 
-    protected ResponseEntity<Object> get(String path, @Nullable Map<String, Object> parameters) {
-        return makeAndSendRequest(HttpMethod.GET, path, parameters, null);
-    }
+    public List<ViewStats> get(String path, String start, String end, List<String> uris, Boolean unique) {
+        return Objects.requireNonNull(webClient.get()
+                        .uri(uriBuilder -> uriBuilder
+                                .path(path)
+                                .queryParam("start", start)
+                                .queryParam("end", end)
+                                .queryParam("uris", uris)
+                                .queryParam("unique", unique)
+                                .build())
+                        .retrieve()
+                        .toEntityList(ViewStats.class)
+                        .block())
+                .getBody();
 
-    protected <T> ResponseEntity<Object> post(String path, T body) {
-        return makeAndSendRequest(HttpMethod.POST, path, null, body);
-    }
-
-    private <T> ResponseEntity<Object> makeAndSendRequest(HttpMethod method, String path,
-                                                          @Nullable Map<String, Object> parameters, @Nullable T body) {
-        HttpEntity<T> requestEntity = new HttpEntity<>(body, defaultHeaders());
-        ResponseEntity<Object> statServiceResponse;
-        try {
-            if (parameters != null) {
-                statServiceResponse = rest.exchange(path, method, requestEntity, Object.class, parameters);
-            } else {
-                statServiceResponse = rest.exchange(path, method, requestEntity, Object.class);
-            }
-        } catch (HttpStatusCodeException e) {
-            return ResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsByteArray());
-        }
-        return prepareStatServiceResponse(statServiceResponse);
-    }
-
-    private HttpHeaders defaultHeaders() {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setAccept(List.of(MediaType.APPLICATION_JSON));
-        return headers;
-    }
-
-    private static ResponseEntity<Object> prepareStatServiceResponse(ResponseEntity<Object> response) {
-        if (response.getStatusCode().is2xxSuccessful()) {
-            return response;
-        }
-        ResponseEntity.BodyBuilder responseBuilder = ResponseEntity.status(response.getStatusCode());
-
-        if (response.hasBody()) {
-            return responseBuilder.body(response.getBody());
-        }
-        return responseBuilder.build();
     }
 }
