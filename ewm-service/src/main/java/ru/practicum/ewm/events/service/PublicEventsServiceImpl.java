@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import ru.practicum.ewm.client.EventClient;
 import ru.practicum.ewm.events.mapper.EventMapper;
 import ru.practicum.ewm.events.model.Event;
+
 import ru.practicum.ewm.events.model.QEvent;
 import ru.practicum.ewm.events.model.State;
 import ru.practicum.ewm.paramRequest.ParamUserRequest;
@@ -32,9 +33,9 @@ public class PublicEventsServiceImpl implements PublicEventsService {
         Pageable pageable = PageRequest.of(from / size, size);
         List<Event> events = repository.findAll(getRequestParamForDb(param), pageable).getContent();
         Map<Long, Long> views = eventClient.get(events);
-        log.info("Get all events with param: text={}, categories={}, paid={}, rangeStart={}, rangeEnd={}, onlyAvailable={}, sort={}",
-                param.getText(), param.getCategories(), param.getPaid(), param.getRangeStart(), param.getRangeEnd(), param.getOnlyAvailable(), param.getSort());
-        List<EventShortDto> eventShort = events.stream().map(event -> EventMapper.toEventShortDto(event, views)).collect(Collectors.toList());
+        List<EventShortDto> eventShort = events.stream()
+                                                .map(event -> EventMapper.toEventShortDto(event, views))
+                                                .collect(Collectors.toList());
         switch (param.getSort()) {
             case VIEWS:
                 eventShort = eventShort.stream()
@@ -48,6 +49,10 @@ public class PublicEventsServiceImpl implements PublicEventsService {
                 break;
             default:
         }
+        log.info("Get all events with param: text={}, categories={}, paid={}, rangeStart={}," +
+                                            " rangeEnd={}, onlyAvailable={}, sort={}",
+                param.getText(), param.getCategories(), param.getPaid(), param.getRangeStart(), param.getRangeEnd(),
+                param.getOnlyAvailable(), param.getSort());
         return eventShort;
     }
 
@@ -64,16 +69,16 @@ public class PublicEventsServiceImpl implements PublicEventsService {
     private BooleanBuilder getRequestParamForDb(ParamUserRequest param) {
         BooleanBuilder booleanBuilder = new BooleanBuilder();
         booleanBuilder.and(QEvent.event.state.eq(State.PUBLISHED));
+        if (param.getText().isBlank()) {
+            String text = param.getText();
+            booleanBuilder.and((QEvent.event.annotation.containsIgnoreCase(text)
+                    .or(QEvent.event.description.containsIgnoreCase(text))));
+        }
         if (param.getCategories() != null) {
             booleanBuilder.and(QEvent.event.category.id.in(param.getCategories()));
         }
         if (param.getPaid() != null) {
             booleanBuilder.and(QEvent.event.paid.eq(param.getPaid()));
-        }
-        if (param.getText().isBlank()) {
-            String text = param.getText();
-            booleanBuilder.and((QEvent.event.annotation.containsIgnoreCase(text)
-                    .or(QEvent.event.description.containsIgnoreCase(text))));
         }
         if (param.getRangeStart() != null) {
             booleanBuilder.and(QEvent.event.eventDate.after(param.getRangeStart()));
@@ -82,7 +87,7 @@ public class PublicEventsServiceImpl implements PublicEventsService {
             booleanBuilder.and(QEvent.event.eventDate.before(param.getRangeEnd()));
         }
         if (param.getOnlyAvailable() != null) {
-            booleanBuilder.and(QEvent.event.confirmedRequests.size().lt(QEvent.event.participantLimit));
+            booleanBuilder.and(QEvent.event.requests.size().lt(QEvent.event.participantLimit));
         }
         return booleanBuilder;
     }
