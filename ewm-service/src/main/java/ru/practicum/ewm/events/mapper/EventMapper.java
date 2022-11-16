@@ -2,20 +2,22 @@ package ru.practicum.ewm.events.mapper;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import ru.practicum.ewm.categories.mapper.CategoriesMapper;
 import ru.practicum.ewm.events.dto.EventFullDto;
 import ru.practicum.ewm.events.dto.EventShortDto;
 import ru.practicum.ewm.events.dto.NewEventDto;
 import ru.practicum.ewm.events.model.State;
+import ru.practicum.ewm.requests.model.Status;
 import ru.practicum.ewm.users.mapper.UsersMapper;
 import ru.practicum.ewm.events.model.Event;
 import ru.practicum.ewm.events.model.Location;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Map;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
+@Slf4j
 public class EventMapper {
 
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -30,47 +32,59 @@ public class EventMapper {
         event.setParticipantLimit(newEventDto.getParticipantLimit());
         event.setRequestModeration(newEventDto.isRequestModeration());
         event.setTitle(newEventDto.getTitle());
-        event.setInitiator(null);
-        event.setCategory(null);
         event.setLat(newEventDto.getLocation().getLat());
         event.setLon(newEventDto.getLocation().getLon());
         event.setState(State.PENDING);
         return event;
     }
 
-    public static EventFullDto toEventFullDto(Event event, Long views) {
+    public static EventFullDto toEventFullDto(Event event,  Map<Long, Long> views) {
         return new EventFullDto(event.getId(),
-                                event.getAnnotation(),
-                                CategoriesMapper.toCategoryDto(event.getCategory()),
-                                null,
-                                event.getCreatedOn().format(DATE_TIME_FORMATTER),
-                                event.getDescription(),
-                                event.getEventDate().format(DATE_TIME_FORMATTER),
-                                UsersMapper.toUserShortDto(event.getInitiator()),
-                                new Location(event.getLat(), event.getLon()),
-                                event.getPaid(),
-                                event.getParticipantLimit(),
-                                event.getPublishedOn() != null ? event.getPublishedOn()
-                                                                              .format(DATE_TIME_FORMATTER) : null,
-                                event.isRequestModeration(),
-                                event.getState(),
-                                event.getTitle(),
-                                views);
+                event.getAnnotation(),
+                CategoriesMapper.toCategoryDto(event.getCategory()),
+                getConfirmedRequests(event),
+                event.getCreatedOn().format(DATE_TIME_FORMATTER),
+                event.getDescription(),
+                event.getEventDate().format(DATE_TIME_FORMATTER),
+                UsersMapper.toUserShortDto(event.getInitiator()),
+                new Location(event.getLat(), event.getLon()),
+                event.getPaid(),
+                event.getParticipantLimit(),
+                event.getPublishedOn() != null ? event.getPublishedOn()
+                        .format(DATE_TIME_FORMATTER) : null,
+                event.isRequestModeration(),
+                event.getState(),
+                event.getTitle(),
+                getViews(event.getId(), views));
     }
 
-    public static EventShortDto toEventShortDto(Event event) {
+    public static EventShortDto toEventShortDto(Event event,  Map<Long, Long> views) {
+        log.info("EventShortDto Requests = " + event.getRequests());
         return new EventShortDto(event.getId(),
                 event.getAnnotation(),
                 CategoriesMapper.toCategoryDto(event.getCategory()),
-                event.getConfirmedRequests().size(),
+                getConfirmedRequests(event),
                 event.getEventDate().format(DATE_TIME_FORMATTER),
                 UsersMapper.toUserShortDto(event.getInitiator()),
                 event.getPaid(),
                 event.getTitle(),
-                null);
+                getViews(event.getId(), views));
     }
 
-    public static List<EventShortDto> toListDto(List<Event> events) {
-        return events.stream().map(EventMapper::toEventShortDto).collect(Collectors.toList());
+    private static long getConfirmedRequests(Event event) {
+        log.info("getConfirmedRequests Requests = " + event.getRequests());
+        if (event.getRequests() == null) {
+            return 0L;
+        }
+        return event.getRequests().stream().filter(e -> e.getStatus() == Status.CONFIRMED).count();
+    }
+
+    private static long getViews(Long eventId, Map<Long, Long> views) {
+        log.info("getViews Views= " + views);
+        Long viewsEvent = views.get(eventId);
+        if (viewsEvent == null) {
+            return 0L;
+        }
+        return viewsEvent;
     }
 }
