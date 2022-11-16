@@ -3,47 +3,57 @@ package ru.practicum.ewm.client;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.web.client.RestTemplateBuilder;
-import org.springframework.http.ResponseEntity;
-import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.web.util.DefaultUriBuilderFactory;
+import ru.practicum.ewm.events.dto.ViewStats;
+import ru.practicum.ewm.events.model.Event;
+
+import javax.servlet.http.HttpServletRequest;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+
 
 @Service
 @Slf4j
-public class EventClient extends StatClient {
+public class EventClient {
+
+   private final StatClient client;
+
+    private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     private final String serviceName;
 
     @Autowired
-    public EventClient(@Value("${stat-service.url}") String serverUrl,
-                       @Value("${service.name}") String serviceName,
-                                                 RestTemplateBuilder builder) {
-        super(
-                builder
-                        .uriTemplateHandler(new DefaultUriBuilderFactory(serverUrl))
-                        .requestFactory(HttpComponentsClientHttpRequestFactory::new)
-                        .build()
-        );
+    public EventClient(@Value("${service.name}") String serviceName, StatClient client) {
         this.serviceName = serviceName;
+        this.client = client;
     }
 
-    public void saveStat(String uri, String ip,  String timestamp) {
-        EndpointHit endpointHit = new EndpointHit(serviceName,uri,ip,timestamp);
-        log.info("Received request to save stat app={}, uri={}, ip={}, timestamp={}",
-                endpointHit.getApp(), endpointHit.getUri(), endpointHit.getIp(), endpointHit.getTimestamp());
-        post("/hit", endpointHit);
+    public Map<Long, Long> get(List<Event> events) {
+        List<ViewStats> stats = client.get("/stats","", "", getURIList(events), false);
+        Map<Long, Long> hits = new HashMap<>();
+        stats.forEach(stat -> hits.put(Long.parseLong(stat.getUri().split("/")[2]), stat.getHits()));
+        log.info("Received request to get stat for events={}", events);
+        return hits;
     }
 
-    public ResponseEntity<Object> getStat(String start, String end, String uris, Boolean unique) {
-	Map<String, Object> parameters = Map.of(
-                "start", start,
-                "end", end,
-                "uris", uris,
-                "unique", unique
-        );
-        log.info("Received request to save stat start={}, end={}, uris={}, unique={}", start, end, uris, unique);
-        return get("/stats?start={start}&end={end}&uris={uris}&unique{unique}", parameters);
+    public void save(List<Event> events, HttpServletRequest request) {
+        log.info("Received request to save state stat with urls={}, ip={}", getURIList(events), request.getRemoteAddr());
+        client.post("/hit", new EndpointHit(serviceName,
+                                                 getURIList(events),
+                                                 request.getRemoteAddr(),
+                                                 LocalDateTime.now().format(DATE_TIME_FORMATTER)));
+    }
+
+    private List<String> getURIList(List<Event> events) {
+        return new ArrayList<>(events.stream()
+                .collect(Collectors.toMap(Event::getId, event -> event)).keySet())
+                .stream()
+                .map(e -> "/events/" + e)
+                .collect(Collectors.toList());
     }
 }
