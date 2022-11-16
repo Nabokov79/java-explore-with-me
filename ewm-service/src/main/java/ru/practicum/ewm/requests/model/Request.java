@@ -23,10 +23,10 @@ public class Request {
     private long id;
     @Column(name = "created")
     private LocalDateTime created;
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "event_id", nullable = false)
+    @ManyToOne
+    @JoinColumn(name = "event_id")
     private Event event;
-    @ManyToOne(optional = false)
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "requester_id",  nullable = false)
     private User requester;
     @Column(name = "status")

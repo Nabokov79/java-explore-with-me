@@ -1,6 +1,6 @@
 package ru.practicum.ewm.events.model;
 
-import org.hibernate.annotations.WhereJoinTable;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import ru.practicum.ewm.categories.model.Category;
 import ru.practicum.ewm.compilations.model.Compilation;
 import ru.practicum.ewm.requests.model.Request;
@@ -9,8 +9,9 @@ import lombok.*;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -51,11 +52,11 @@ public class Event {
     @Column(name = "title", length = 120)
     private String title;
 
-    @ManyToOne(optional = false)
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "initiator_id",  nullable = false)
     private User initiator;
 
-    @ManyToOne(optional = false)
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id",  nullable = false)
     private Category category;
 
@@ -69,15 +70,15 @@ public class Event {
     @Enumerated(EnumType.STRING)
     private State state;
 
-    @ManyToMany(mappedBy = "events")
-    private List<Compilation> compilation;
+    @ManyToMany(mappedBy = "events", fetch = FetchType.LAZY)
+    private Set<Compilation> compilation;
 
-    @OneToMany
-    @JoinTable(name = "requests",
-            joinColumns = @JoinColumn(name = "event_id"),
-            inverseJoinColumns = @JoinColumn(name = "id"))
-    @WhereJoinTable(clause = "status = 'CONFIRMED'")
-    private List<Request> confirmedRequests;
+    @OneToMany(mappedBy = "event",
+            orphanRemoval = true,
+            cascade = CascadeType.REMOVE,
+            fetch = FetchType.LAZY)
+    @JsonIgnore
+    private Set<Request> requests = new HashSet<>();
 
     @Override
     public boolean equals(Object o) {
