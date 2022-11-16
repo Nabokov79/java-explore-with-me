@@ -60,27 +60,28 @@ public class ExceptionsHandler {
         body.put(ERRORS, errors);
         body.put(MESSAGE, ex.getMessage());
         body.put(REASONS, "Integrity constraint has been violated.");
-        body.put(STATUS, HttpStatus.CONFLICT.getReasonPhrase());
+        body.put(STATUS, HttpStatus.BAD_REQUEST.getReasonPhrase());
         body.put(TIMESTAMP, OffsetDateTime.now().format(DATE_TIME_FORMATTER));
         logger.error("Not valid argument: {}", ex.getMessage(), ex);
-        return ResponseEntity.badRequest().body(body);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
+
     }
 
     @ExceptionHandler(value = ConstraintViolationException.class)
     protected ResponseEntity<Object> constraintViolationException(ConstraintViolationException ex) {
-        Map<String, Object> body = getGeneralBody(HttpStatus.CONFLICT.getReasonPhrase(),
+        Map<String, Object> body = getGeneralBody(HttpStatus.FORBIDDEN.getReasonPhrase(),
                                             "Integrity constraint has been violated.",
                                                    ex.getMessage());
         logger.error("Not valid error: {}", ex.getMessage(), ex);
-        return ResponseEntity.badRequest().body(body);
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(body);
     }
 
     @ExceptionHandler(value = Throwable.class)
     protected ResponseEntity<Object> handleInternalServerError(Throwable ex) {
-        Map<String, Object> body = getGeneralBody(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),
+        Map<String, Object> body = getGeneralBody(HttpStatus.CONFLICT.getReasonPhrase(),
                                            "Error occurred.", ex.getMessage());
         logger.error("Internal server error: {}", ex.getMessage(), ex);
-        return ResponseEntity.internalServerError().body(body);
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
     }
 
     @ExceptionHandler(value = DateTimeParseException.class)
