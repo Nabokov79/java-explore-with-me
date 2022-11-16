@@ -4,14 +4,16 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.List;
+
 @Getter
 @Setter
 @AllArgsConstructor
-public class EndpointHit {
+public class EndpointHitDto {
 
     private String app;
 
-    private String uri;
+    private List<String> uri;
 
     private String ip;
 
