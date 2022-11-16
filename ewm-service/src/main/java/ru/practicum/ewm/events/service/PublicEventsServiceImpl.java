@@ -28,6 +28,7 @@ public class PublicEventsServiceImpl implements PublicEventsService {
 
     private final EventsRepository repository;
     private final EventClient eventClient;
+
     @Override
     public List<EventShortDto> getAll(ParamUserRequest param, int from, int size, HttpServletRequest request) {
         Pageable pageable = PageRequest.of(from / size, size);
