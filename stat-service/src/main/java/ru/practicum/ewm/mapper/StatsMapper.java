@@ -23,6 +23,7 @@ public class StatsMapper {
         stat.setTimestamp(LocalDateTime.parse(endpointHit.getTimestamp(), DATA_TIME_FORMATTER));
         return stat;
     }
+
     public static List<Stat> toListStat(List<String> uris, EndpointHitDto endpointHitDto, App app) {
         List<Stat> stats = new ArrayList<>();
         for (String uri : uris) {
