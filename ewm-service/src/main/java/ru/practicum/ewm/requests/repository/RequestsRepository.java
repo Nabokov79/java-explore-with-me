@@ -4,7 +4,6 @@ import org.springframework.data.jpa.repository.Query;
 import ru.practicum.ewm.requests.model.Request;
 import ru.practicum.ewm.requests.model.Status;
 import org.springframework.data.jpa.repository.JpaRepository;
-
 import java.util.Optional;
 import java.util.Set;
 
@@ -23,9 +22,8 @@ public interface RequestsRepository extends JpaRepository<Request, Long> {
 
     Optional<Request> findByRequesterIdAndEventId(Long requesterId, Long eventId);
 
-    Set<Request> findAllByEventId(Long eventId);
 
-    Long countAllByEventIdAndStatus(long eventId, Status status);
+    Set<Request> findAllByEventId(Long eventId);
 
     Long countAllByEventIdAndStatus(Long eventId, Status status);
 }
