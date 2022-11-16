@@ -24,7 +24,11 @@ public class AdminUsersServiceImpl implements AdminUsersService {
     public List<UserDto> getAll(List<Long> ids, int from, int size) {
         Pageable pageable = PageRequest.of(from / size, size);
         log.info("Get users with ids = " + ids);
-        return UsersMapper.toListDto(repository.findAllById(ids, pageable));
+        if (!ids.isEmpty()) {
+            return UsersMapper.toListDto(repository.findAllById(ids));
+        } else {
+            return UsersMapper.toListDto(repository.findAll(pageable).getContent());
+        }
     }
 
     @Override

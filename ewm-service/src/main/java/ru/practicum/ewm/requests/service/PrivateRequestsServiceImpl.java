@@ -38,7 +38,7 @@ public class PrivateRequestsServiceImpl implements PrivateRequestsService {
 
     @Override
     public ParticipationRequestDto add(Long userId, Long eventId) {
-        log.info("SAVE REQUEST event with userId={}, eventId={}", userId, eventId);
+        usersRepository.findById(userId).orElseThrow(() -> new BadRequestException(String.format("User with id=%S not found", userId)));
         if (eventId == null) {
             throw new BadRequestException(
                     String.format("Bad request with parameters eventId= %s", eventId));

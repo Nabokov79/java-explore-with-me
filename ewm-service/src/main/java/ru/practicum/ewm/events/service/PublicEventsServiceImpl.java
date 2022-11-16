@@ -5,7 +5,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ru.practicum.ewm.client.EventClient;
 import ru.practicum.ewm.events.mapper.EventMapper;
-import ru.practicum.ewm.client.EndpointHit;
 import ru.practicum.ewm.events.model.Event;
 import ru.practicum.ewm.events.model.QEvent;
 import ru.practicum.ewm.events.model.State;
@@ -18,8 +17,6 @@ import org.springframework.stereotype.Service;
 import ru.practicum.ewm.events.dto.EventFullDto;
 import ru.practicum.ewm.events.dto.EventShortDto;
 import javax.servlet.http.HttpServletRequest;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -30,11 +27,41 @@ public class PublicEventsServiceImpl implements PublicEventsService {
 
     private final EventsRepository repository;
     private final EventClient eventClient;
-    private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-
     @Override
     public List<EventShortDto> getAll(ParamUserRequest param, int from, int size, HttpServletRequest request) {
         Pageable pageable = PageRequest.of(from / size, size);
+        List<Event> events = repository.findAll(getRequestParamForDb(param), pageable).getContent();
+        Map<Long, Long> views = eventClient.get(events);
+        log.info("Get all events with param: text={}, categories={}, paid={}, rangeStart={}, rangeEnd={}, onlyAvailable={}, sort={}",
+                param.getText(), param.getCategories(), param.getPaid(), param.getRangeStart(), param.getRangeEnd(), param.getOnlyAvailable(), param.getSort());
+        List<EventShortDto> eventShort = events.stream().map(event -> EventMapper.toEventShortDto(event, views)).collect(Collectors.toList());
+        switch (param.getSort()) {
+            case VIEWS:
+                eventShort = eventShort.stream()
+                        .sorted(Comparator.comparing(EventShortDto::getViews))
+                        .collect(Collectors.toList());
+                break;
+            case EVENT_DATE:
+                eventShort = eventShort.stream()
+                        .sorted(Comparator.comparing(EventShortDto::getEventDate))
+                        .collect(Collectors.toList());
+                break;
+            default:
+        }
+        return eventShort;
+    }
+
+    @Override
+    public EventFullDto getFullInfo(Long id, HttpServletRequest request) {
+        Event event = repository.findById(id)
+                .orElseThrow(() -> new NotFoundException(String.format("Event not found by id=%s", id)));
+        List<Event> events = List.of(event);
+        eventClient.save(events, request);
+        log.info("Get full info for event eventId={}", id);
+        return EventMapper.toEventFullDto(event,  eventClient.get(events));
+    }
+
+    private BooleanBuilder getRequestParamForDb(ParamUserRequest param) {
         BooleanBuilder booleanBuilder = new BooleanBuilder();
         booleanBuilder.and(QEvent.event.state.eq(State.PUBLISHED));
         if (param.getCategories() != null) {
@@ -57,45 +84,6 @@ public class PublicEventsServiceImpl implements PublicEventsService {
         if (param.getOnlyAvailable() != null) {
             booleanBuilder.and(QEvent.event.confirmedRequests.size().lt(QEvent.event.participantLimit));
         }
-        List<EventShortDto> eventsShortDto =
-                                       EventMapper.toListDto(repository.findAll(booleanBuilder, pageable).getContent());
-        switch (param.getSort()) {
-            case VIEWS:
-                eventsShortDto = eventsShortDto.stream().sorted(Comparator.comparing(EventShortDto::getViews))
-                                                        .collect(Collectors.toList());
-                break;
-            case EVENT_DATE:
-                eventsShortDto = eventsShortDto.stream().sorted(Comparator.comparing(EventShortDto::getEventDate))
-                                                       .collect(Collectors.toList());
-                break;
-            default:
-        }
-        saveStat(request);
-        return eventsShortDto;
-    }
-
-    @Override
-    public EventFullDto getFullInfo(Long id, HttpServletRequest request) {
-        Event event = repository.findById(id)
-                .orElseThrow(() -> new NotFoundException(String.format("Event not found by id=%s", id)));
-        saveStat(request);
-        EventFullDto eventFullDto = EventMapper.toEventFullDto(event, getStatByUri(request.getRequestURI()));
-        log.info("Get event by id={}", id);
-        return eventFullDto;
-    }
-
-    private void saveStat(HttpServletRequest request) {
-        eventClient.saveStat(request.getRequestURI(), request.getRemoteAddr(),
-                                                        LocalDateTime.now().format(DATE_TIME_FORMATTER));
-    }
-
-    private long getStatByUri(String uri) {
-        String uris = String.join(",",uri);
-        Object stat = eventClient.getStat("","", uris, false).getBody();
-        long list = 0L;
-        if (stat != null) {
-            list = Arrays.asList(stat, EndpointHit.class).size();
-        }
-        return list;
+        return booleanBuilder;
     }
 }

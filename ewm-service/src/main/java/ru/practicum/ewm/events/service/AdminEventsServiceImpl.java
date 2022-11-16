@@ -6,7 +6,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import ru.practicum.ewm.categories.repository.CategoriesRepository;
-import ru.practicum.ewm.client.EndpointHit;
 import ru.practicum.ewm.client.EventClient;
 import ru.practicum.ewm.events.mapper.EventMapper;
 import ru.practicum.ewm.events.model.Event;
@@ -19,12 +18,10 @@ import ru.practicum.ewm.exeption.NotFoundException;
 import org.springframework.stereotype.Service;
 import ru.practicum.ewm.events.dto.AdminUpdateEventRequest;
 import ru.practicum.ewm.events.dto.EventFullDto;
-
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -39,27 +36,11 @@ public class AdminEventsServiceImpl implements AdminEventsService {
 
     @Override
     public List<EventFullDto> search(ParamAdminRequest param, HttpServletRequest request, int from, int size) {
-        BooleanBuilder booleanBuilder = new BooleanBuilder();
         Pageable pageable = PageRequest.of(from / size, size);
-        if (param.getUsers() != null) {
-            booleanBuilder.and(QEvent.event.initiator.id.in(param.getUsers()));
-        }
-        if (param.getStates() != null) {
-            booleanBuilder.and(QEvent.event.state.in(param.getStates()));
-        }
-        if (param.getCategories() != null) {
-            booleanBuilder.and((QEvent.event.category.id.in(param.getCategories())));
-        }
-        if (param.getRangeStart() != null) {
-            booleanBuilder.and(QEvent.event.eventDate.after(param.getRangeStart()));
-        }
-        if (param.getRangeEnd() != null) {
-            booleanBuilder.and(QEvent.event.eventDate.before(param.getRangeEnd()));
-        }
-        List<Event> events = repository.findAll(booleanBuilder, pageable).getContent();
+        List<Event> events = repository.findAll(getRequestParam(param), pageable).getContent();
+        Map<Long, Long> views = eventClient.get(events);
         log.info("Search event with parameters usersId={}, states={}, categories={}, rangeStart={}, rangeEnd={}",
                 param.getUsers(), param.getStates(), param.getCategories(), param.getRangeStart(), param.getRangeEnd());
-        long views = getViews(request.getRequestURI());
         return events.stream().map(event -> EventMapper.toEventFullDto(event, views)).collect(Collectors.toList());
     }
 
@@ -76,9 +57,8 @@ public class AdminEventsServiceImpl implements AdminEventsService {
         event.setParticipantLimit(adminUpdateEvent.getParticipantLimit());
         event.setRequestModeration(adminUpdateEvent.isRequestModeration());
         event.setTitle(adminUpdateEvent.getTitle());
-        repository.save(event);
         log.info("Edit event with eventId={}", eventId);
-        return EventMapper.toEventFullDto(event, getViews(request.getRequestURI()));
+        return save(event);
     }
 
     @Override
@@ -86,16 +66,15 @@ public class AdminEventsServiceImpl implements AdminEventsService {
         Event event = getById(eventId);
         if (event.getEventDate().isBefore(LocalDateTime.now().plusHours(1))) {
             throw new BadRequestException(
-                             String.format("Time of the event is set incorrectly eventDate=%s", event.getEventDate()));
+                    String.format("Time of the event is set incorrectly eventDate=%s", event.getEventDate()));
         }
         if (!event.getState().equals(State.PENDING)) {
             throw new BadRequestException("Event is " + event.getState());
         }
         event.setState(State.PUBLISHED);
         event.setPublishedOn(LocalDateTime.now());
-        repository.save(event);
         log.info("Publish event with eventId={}", eventId);
-        return EventMapper.toEventFullDto(event, getViews(request.getRequestURI()));
+        return save(event);
     }
 
     @Override
@@ -105,19 +84,39 @@ public class AdminEventsServiceImpl implements AdminEventsService {
             throw new BadRequestException("Event is " + event.getState());
         }
         event.setState(State.CANCELED);
-        repository.save(event);
         log.info("Reject event with eventId={}", eventId);
-        return EventMapper.toEventFullDto(event, getViews(request.getRequestURI()));
+        return save(event);
+
     }
 
     private Event getById(Long eventId) {
         log.info("Get event with eventId={}", eventId);
         return repository.findById(eventId)
-                .orElseThrow(() ->  new NotFoundException(String.format("Event not found by id=%s", eventId)));
+                .orElseThrow(() -> new NotFoundException(String.format("Event not found by id=%s", eventId)));
     }
 
-    private long getViews(String uri) {
-        Object stat = eventClient.getStat("","", uri, false).getBody();
-        return Arrays.asList(stat, EndpointHit.class).size();
+    private EventFullDto save(Event event) {
+        repository.save(event);
+        return  EventMapper.toEventFullDto(event,  eventClient.get(List.of(event)));
+    }
+
+    private BooleanBuilder getRequestParam(ParamAdminRequest param) {
+        BooleanBuilder booleanBuilder = new BooleanBuilder();
+        if (param.getUsers() != null) {
+            booleanBuilder.and(QEvent.event.initiator.id.in(param.getUsers()));
+        }
+        if (param.getStates() != null) {
+            booleanBuilder.and(QEvent.event.state.in(param.getStates()));
+        }
+        if (param.getCategories() != null) {
+            booleanBuilder.and((QEvent.event.category.id.in(param.getCategories())));
+        }
+        if (param.getRangeStart() != null) {
+            booleanBuilder.and(QEvent.event.eventDate.after(param.getRangeStart()));
+        }
+        if (param.getRangeEnd() != null) {
+            booleanBuilder.and(QEvent.event.eventDate.before(param.getRangeEnd()));
+        }
+        return booleanBuilder;
     }
 }

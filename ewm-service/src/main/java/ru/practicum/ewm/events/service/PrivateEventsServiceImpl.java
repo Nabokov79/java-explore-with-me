@@ -3,7 +3,6 @@ package ru.practicum.ewm.events.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ru.practicum.ewm.categories.repository.CategoriesRepository;
-import ru.practicum.ewm.client.EndpointHit;
 import ru.practicum.ewm.client.EventClient;
 import ru.practicum.ewm.events.dto.EventFullDto;
 import ru.practicum.ewm.events.dto.NewEventDto;
@@ -47,8 +46,9 @@ public class PrivateEventsServiceImpl implements PrivateEventsService {
     public List<EventFullDto> getByUserId(Long userId, int from, int size, HttpServletRequest request) {
         Pageable pageable = PageRequest.of(from / size, size);
         List<Event> events = repository.findAllByInitiatorId(userId, pageable);
+        Map<Long, Long> views = eventClient.get(events);
         log.info("Get event by userId={} with parameters from={}, size={}", userId, from, size);
-        return events.stream().map(event -> EventMapper.toEventFullDto(event, getViews(request.getRequestURI()))).collect(Collectors.toList());
+        return events.stream().map(event -> EventMapper.toEventFullDto(event, views)).collect(Collectors.toList());
     }
 
     @Override
@@ -62,17 +62,11 @@ public class PrivateEventsServiceImpl implements PrivateEventsService {
         if (event.getState().equals(State.PUBLISHED)) {
             throw new BadRequestException("Event is published, cannot be changed");
         }
-
         if (event.getState().equals(State.CANCELED)) {
             event.setPaid(true);
         }
-        long views = getViews(request.getRequestURI());
-        EventFullDto eventFullDto = EventMapper.toEventFullDto(getModifiedEvent(event, eventRequest), views);
-        eventFullDto.setConfirmedRequests(
-                                      requestsRepository.countAllByEventIdAndStatus(event.getId(), Status.CONFIRMED));
-        repository.save(event);
         log.info("Update event by initiator userId={} ", userId);
-        return EventMapper.toEventFullDto(event, views);
+        return save(getModifiedEvent(event, eventRequest));
     }
 
     @Override
@@ -87,18 +81,15 @@ public class PrivateEventsServiceImpl implements PrivateEventsService {
         event.setCategory(categoriesRepository.findById(newEventDto.getCategory())
                                           .orElseThrow(() -> new NotFoundException(
                                           String.format("Category with id= %s not found", newEventDto.getCategory()))));
-        repository.save(event);
-        log.info("Create event eventId={}", event.getId());
-        return EventMapper.toEventFullDto(event, getViews(request.getRequestURI()));
+        log.info("Create event={}", event);
+        return save(event);
     }
 
     @Override
     public EventFullDto getInfoCurrentUser(Long userId, Long eventId, HttpServletRequest request) {
         Event event = get(eventId, userId);
-        EventFullDto eventFullDto = EventMapper.toEventFullDto(event, getViews(request.getRequestURI()));
-        eventFullDto.setConfirmedRequests(requestsRepository.countAllByEventIdAndStatus(eventId, Status.CONFIRMED));
         log.info("Get event info current user userId={}", userId);
-        return eventFullDto;
+        return EventMapper.toEventFullDto(event, eventClient.get(List.of(event)));
     }
 
     @Override
@@ -112,9 +103,8 @@ public class PrivateEventsServiceImpl implements PrivateEventsService {
             throw new BadRequestException(String.format("Event moderation is required, state=%s", event.getState()));
         }
         event.setState(State.CANCELED);
-        repository.save(event);
         log.info("Event cancel eventId={}", eventId);
-        return EventMapper.toEventFullDto(event, getViews(request.getRequestURI()));
+        return save(event);
     }
 
     @Override
@@ -166,7 +156,7 @@ public class PrivateEventsServiceImpl implements PrivateEventsService {
 
     private Event getModifiedEvent(Event eventDb, UpdateEventRequest eventRequest) {
         LocalDateTime eventDate = LocalDateTime.parse(eventRequest.getEventDate(), DATE_TIME_FORMATTER);
-        if (!eventDb.getAnnotation().isBlank()) {
+        if (!eventRequest.getAnnotation().isBlank() && eventRequest.getAnnotation() != null) {
             eventDb.setAnnotation(eventRequest.getAnnotation());
             log.info("Update annotation event new annotation={}", eventDb.getAnnotation());
         }
@@ -176,7 +166,7 @@ public class PrivateEventsServiceImpl implements PrivateEventsService {
                             String.format("Category with id= %s not found", eventRequest.getCategory()))));
             log.info("Update category event, new category catIa={}", eventDb.getCategory().getId());
         }
-        if (!eventDb.getDescription().isBlank()) {
+        if (!eventRequest.getDescription().isBlank() && eventRequest.getDescription() != null) {
             eventDb.setDescription(eventRequest.getDescription());
             log.info("Update description event, new annotation={}", eventDb.getDescription());
         }
@@ -188,11 +178,11 @@ public class PrivateEventsServiceImpl implements PrivateEventsService {
             eventDb.setPaid(eventRequest.getPaid());
             log.info("Update paid event, new paid={}", eventDb.getPaid());
         }
-        if (eventDb.getParticipantLimit() != null) {
+        if (eventRequest.getParticipantLimit() != null) {
             eventDb.setParticipantLimit(eventRequest.getParticipantLimit());
             log.info("Update participant limit event, new limit={}", eventDb.getParticipantLimit());
         }
-        if (!eventDb.getTitle().isBlank()) {
+        if (!eventRequest.getTitle().isBlank() && eventRequest.getTitle() != null) {
             eventDb.setTitle(eventRequest.getTitle());
             log.info("Update title event, new title={}", eventDb.getTitle());
         }
@@ -202,16 +192,14 @@ public class PrivateEventsServiceImpl implements PrivateEventsService {
     }
 
     private Event get(Long eventId, Long userId) {
-        Optional<Event> eventDb = repository.findEventByIdAndInitiatorId(eventId, userId);
-        if (eventDb.isEmpty()) {
-            throw new NotFoundException(String.format("Event not found with userId=%s, eventId=%s", userId, eventId));
-        } else {
-           return eventDb.get();
-        }
+        return repository.findEventByIdAndInitiatorId(eventId, userId).
+                orElseThrow(() ->
+                   new NotFoundException(String.format("Event not found with userId=%s, eventId=%s", userId, eventId)));
+
     }
 
-    private long getViews(String uri) {
-        Object stat = eventClient.getStat("","", uri, false).getBody();
-        return Arrays.asList(stat, EndpointHit.class).size();
+    private EventFullDto save(Event event) {
+        repository.save(event);
+        return EventMapper.toEventFullDto(event, eventClient.get(List.of(event)));
     }
 }
