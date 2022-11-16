@@ -192,8 +192,8 @@ public class PrivateEventsServiceImpl implements PrivateEventsService {
     }
 
     private Event get(Long eventId, Long userId) {
-        return repository.findEventByIdAndInitiatorId(eventId, userId).
-                orElseThrow(() ->
+        return repository.findEventByIdAndInitiatorId(eventId, userId)
+        .orElseThrow(() ->
                    new NotFoundException(String.format("Event not found with userId=%s, eventId=%s", userId, eventId)));
     }
 
