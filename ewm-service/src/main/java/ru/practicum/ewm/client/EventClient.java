@@ -6,8 +6,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import ru.practicum.ewm.events.dto.ViewStats;
 import ru.practicum.ewm.events.model.Event;
-
-import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -41,11 +39,11 @@ public class EventClient {
         return hits;
     }
 
-    public void save(List<Event> events, HttpServletRequest request) {
-        log.info("Received request to save state stat with urls={}, ip={}", getURIList(events), request.getRemoteAddr());
+    public void save(String uri, String ip) {
+        log.info("Received request to save state stat with urls={}, ip={}",uri, ip);
         client.post("/hit", new EndpointHit(serviceName,
-                                                 getURIList(events),
-                                                 request.getRemoteAddr(),
+                                                 uri,
+                                                 ip,
                                                  LocalDateTime.now().format(DATE_TIME_FORMATTER)));
     }
 
