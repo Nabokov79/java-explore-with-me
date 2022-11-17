@@ -4,6 +4,8 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ru.practicum.ewm.categories.mapper.CategoriesMapper;
+import ru.practicum.ewm.categories.model.Category;
+import ru.practicum.ewm.events.dto.AdminUpdateEventRequest;
 import ru.practicum.ewm.events.dto.EventFullDto;
 import ru.practicum.ewm.events.dto.EventShortDto;
 import ru.practicum.ewm.events.dto.NewEventDto;
@@ -38,6 +40,18 @@ public class EventMapper {
         return event;
     }
 
+    public static Event getEvent(Event event, AdminUpdateEventRequest adminUpdateEvent, Category category) {
+        event.setAnnotation(adminUpdateEvent.getAnnotation());
+        event.setCategory(category);
+        event.setDescription(adminUpdateEvent.getDescription());
+        event.setEventDate(LocalDateTime.parse(adminUpdateEvent.getEventDate(), DATE_TIME_FORMATTER));
+        event.setPaid(adminUpdateEvent.isPaid());
+        event.setParticipantLimit(adminUpdateEvent.getParticipantLimit());
+        event.setRequestModeration(adminUpdateEvent.isRequestModeration());
+        event.setTitle(adminUpdateEvent.getTitle());
+        return event;
+    }
+
     public static EventFullDto toEventFullDto(Event event,  Map<Long, Long> views) {
         return new EventFullDto(event.getId(),
                 event.getAnnotation(),
@@ -50,8 +64,7 @@ public class EventMapper {
                 new Location(event.getLat(), event.getLon()),
                 event.getPaid(),
                 event.getParticipantLimit(),
-                event.getPublishedOn() != null ? event.getPublishedOn()
-                        .format(DATE_TIME_FORMATTER) : null,
+                event.getPublishedOn() != null ? event.getPublishedOn().format(DATE_TIME_FORMATTER) : null,
                 event.isRequestModeration(),
                 event.getState(),
                 event.getTitle(),
@@ -59,7 +72,6 @@ public class EventMapper {
     }
 
     public static EventShortDto toEventShortDto(Event event,  Map<Long, Long> views) {
-        log.info("EventShortDto Requests = " + event.getRequests());
         return new EventShortDto(event.getId(),
                 event.getAnnotation(),
                 CategoriesMapper.toCategoryDto(event.getCategory()),
@@ -72,7 +84,6 @@ public class EventMapper {
     }
 
     private static long getConfirmedRequests(Event event) {
-        log.info("getConfirmedRequests Requests = " + event.getRequests());
         if (event.getRequests() == null) {
             return 0L;
         }
@@ -80,7 +91,6 @@ public class EventMapper {
     }
 
     private static long getViews(Long eventId, Map<Long, Long> views) {
-        log.info("getViews Views= " + views);
         Long viewsEvent = views.get(eventId);
         if (viewsEvent == null) {
             return 0L;
