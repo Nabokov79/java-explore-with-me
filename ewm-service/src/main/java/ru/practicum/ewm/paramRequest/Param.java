@@ -2,7 +2,6 @@ package ru.practicum.ewm.paramRequest;
 
 import ru.practicum.ewm.events.model.Sort;
 import ru.practicum.ewm.events.model.State;
-
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -10,7 +9,6 @@ import java.util.List;
 public class Param {
 
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-
 
     public static ParamAdminRequest toParamAdminRequest(List<Long> users, List<State> states, List<Long> categories,
                                                         String rangeStart, String rangeEnd) {
@@ -38,9 +36,9 @@ public class Param {
         }
         if (rangeEnd != null) {
             param.setRangeEnd(LocalDateTime.parse(rangeEnd, DATE_TIME_FORMATTER));
+            param.setOnlyAvailable(onlyAvailable);
+            param.setSort(Sort.valueOf(sort));
         }
-        param.setOnlyAvailable(onlyAvailable);
-        param.setSort(Sort.valueOf(sort));
         return param;
     }
 }
