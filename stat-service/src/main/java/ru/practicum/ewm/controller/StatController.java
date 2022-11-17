@@ -1,7 +1,7 @@
 package ru.practicum.ewm.controller;
 
 import lombok.RequiredArgsConstructor;
-import ru.practicum.ewm.dto.EndpointHitDto;
+import ru.practicum.ewm.dto.EndpointHit;
 import ru.practicum.ewm.dto.ViewStats;
 import ru.practicum.ewm.service.StatService;
 import org.springframework.http.ResponseEntity;
@@ -15,8 +15,8 @@ public class StatController {
     private final StatService service;
 
     @PostMapping("/hit")
-    public void saveStat(@RequestBody EndpointHitDto endpointHitDto) {
-        service.saveStat(endpointHitDto);
+    public void saveStat(@RequestBody EndpointHit endpointHit) {
+        service.saveStat(endpointHit);
     }
 
     @GetMapping("/stats")

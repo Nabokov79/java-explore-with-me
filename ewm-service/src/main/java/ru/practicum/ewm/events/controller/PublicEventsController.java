@@ -26,12 +26,12 @@ public class PublicEventsController {
     public ResponseEntity<List<EventShortDto>> getAll(@RequestParam(required = false) String text,
                                                       @RequestParam(required = false) List<Long> categories,
                                                       @RequestParam(required = false) Boolean paid,
-                                                      @RequestParam(required = false) String rangeStart,
-                                                      @RequestParam(required = false) String rangeEnd,
                                                       @RequestParam(required = false) Boolean onlyAvailable,
                                               @RequestParam(name = "sort", defaultValue = "EVENT_DATE") String sort,
                                               @PositiveOrZero @RequestParam(name = "from", defaultValue = "0") int from,
                                               @Positive @RequestParam(name = "size", defaultValue = "10") int size,
+            @RequestParam(required = false) String rangeStart,
+            @RequestParam(required = false) String rangeEnd,
                                                             HttpServletRequest request) {
         ParamUserRequest paramUserRequest = Param.toParamUserRequest(text,categories, paid, rangeStart, rangeEnd,
                                                                                              onlyAvailable, sort

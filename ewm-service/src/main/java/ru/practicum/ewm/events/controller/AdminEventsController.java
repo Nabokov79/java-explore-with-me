@@ -28,10 +28,10 @@ public class AdminEventsController {
     public ResponseEntity<List<EventFullDto>> search(@RequestParam(required = false) List<Long> users,
                                                      @RequestParam(required = false) List<State> states,
                                                      @RequestParam(required = false) List<Long> categories,
-                                                     @RequestParam(required = false) String rangeStart,
-                                                     @RequestParam(required = false) String rangeEnd,
                             @PositiveOrZero @RequestParam(name = "from", defaultValue = "0", required = false) int from,
                             @Positive @RequestParam(name = "size", defaultValue = "10", required = false) int size,
+           @RequestParam(required = false) String rangeStart,
+           @RequestParam(required = false) String rangeEnd,
                                                      HttpServletRequest request) {
         ParamAdminRequest param = Param.toParamAdminRequest(users, states, categories, rangeStart, rangeEnd);
         return ResponseEntity.ok().body(service.search(param, request, from, size));
