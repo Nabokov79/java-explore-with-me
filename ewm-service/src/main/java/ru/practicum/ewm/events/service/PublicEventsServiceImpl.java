@@ -17,6 +17,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import ru.practicum.ewm.events.dto.EventFullDto;
 import ru.practicum.ewm.events.dto.EventShortDto;
+
 import javax.servlet.http.HttpServletRequest;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -31,27 +32,29 @@ public class PublicEventsServiceImpl implements PublicEventsService {
 
     @Override
     public List<EventShortDto> getAll(ParamUserRequest param, int from, int size, HttpServletRequest request) {
+        log.info("Sort = " + (param.getSort()));
         Pageable pageable = PageRequest.of(from / size, size);
         List<Event> events = repository.findAll(getRequestParamForDb(param), pageable).getContent();
         Map<Long, Long> views = eventClient.get(events);
         List<EventShortDto> eventShort = events.stream()
-                                                .map(event -> EventMapper.toEventShortDto(event, views))
-                                                .collect(Collectors.toList());
-        switch (param.getSort()) {
-            case VIEWS:
-                eventShort = eventShort.stream()
-                        .sorted(Comparator.comparing(EventShortDto::getViews))
-                        .collect(Collectors.toList());
-                break;
-            case EVENT_DATE:
-                eventShort = eventShort.stream()
-                        .sorted(Comparator.comparing(EventShortDto::getEventDate))
-                        .collect(Collectors.toList());
-                break;
-            default:
+                .map(event -> EventMapper.toEventShortDto(event, views))
+                .collect(Collectors.toList());
+        if (param.getSort() != null) {
+            switch (param.getSort()) {
+                case VIEWS:
+                    eventShort = eventShort.stream()
+                            .sorted(Comparator.comparing(EventShortDto::getViews))
+                            .collect(Collectors.toList());
+                    break;
+                case EVENT_DATE:
+                    eventShort = eventShort.stream()
+                            .sorted(Comparator.comparing(EventShortDto::getEventDate))
+                            .collect(Collectors.toList());
+                    break;
+            }
         }
         log.info("Get all events with param: text={}, categories={}, paid={}, rangeStart={}," +
-                                            " rangeEnd={}, onlyAvailable={}, sort={}",
+                        " rangeEnd={}, onlyAvailable={}, sort={}",
                 param.getText(), param.getCategories(), param.getPaid(), param.getRangeStart(), param.getRangeEnd(),
                 param.getOnlyAvailable(), param.getSort());
         return eventShort;
@@ -61,10 +64,9 @@ public class PublicEventsServiceImpl implements PublicEventsService {
     public EventFullDto getFullInfo(Long id, HttpServletRequest request) {
         Event event = repository.findById(id)
                 .orElseThrow(() -> new NotFoundException(String.format("Event not found by id=%s", id)));
-        List<Event> events = List.of(event);
-        eventClient.save(events, request);
+        eventClient.save(request.getRequestURI(), request.getRemoteAddr());
         log.info("Get full info for event eventId={}", id);
-        return EventMapper.toEventFullDto(event,  eventClient.get(events));
+        return EventMapper.toEventFullDto(event, eventClient.get(List.of(event)));
     }
 
     private BooleanBuilder getRequestParamForDb(ParamUserRequest param) {

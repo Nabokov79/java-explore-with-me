@@ -39,7 +39,6 @@ public class PrivateEventsServiceImpl implements PrivateEventsService {
     private final UsersRepository usersRepository;
     private final CategoriesRepository categoriesRepository;
     private final RequestsRepository requestsRepository;
-
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     @Override
@@ -141,13 +140,12 @@ public class PrivateEventsServiceImpl implements PrivateEventsService {
 
     @Override
     public ParticipationRequestDto rejectRequestUsers(Long userId, Long eventId, Long reqId) {
-        List<Request> requests = requestsRepository.findByIdAndEventId(reqId, eventId).stream()
-                                                    .filter(request -> request.getRequester().getId() != userId)
-                                                    .collect(Collectors.toList());
-        if (requests.isEmpty()) {
+        Request request = requestsRepository.findByIdAndEventId(reqId, eventId).stream()
+                                                    .filter(r -> r.getRequester().getId() != userId)
+                                                    .collect(Collectors.toList()).get(0);
+        if (request == null) {
             throw new NotFoundException(String.format("Request not found with reqId=%s, eventId=%s", reqId, eventId));
         }
-        Request request = requests.get(0);
         request.setStatus(Status.REJECTED);
         requestsRepository.save(request);
         log.info("Reject request users userId={}, eventId={}, reqId={}",userId, eventId, reqId);

@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import ru.practicum.ewm.categories.model.Category;
 import ru.practicum.ewm.categories.repository.CategoriesRepository;
 import ru.practicum.ewm.client.EventClient;
 import ru.practicum.ewm.events.mapper.EventMapper;
@@ -20,7 +21,6 @@ import ru.practicum.ewm.events.dto.AdminUpdateEventRequest;
 import ru.practicum.ewm.events.dto.EventFullDto;
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -32,7 +32,6 @@ public class AdminEventsServiceImpl implements AdminEventsService {
     private final EventsRepository repository;
     private final EventClient eventClient;
     private final CategoriesRepository categoriesRepository;
-    private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     @Override
     public List<EventFullDto> search(ParamAdminRequest param, HttpServletRequest request, int from, int size) {
@@ -47,18 +46,11 @@ public class AdminEventsServiceImpl implements AdminEventsService {
     @Override
     public EventFullDto edit(Long eventId, AdminUpdateEventRequest adminUpdateEvent, HttpServletRequest request) {
         Event event = getById(eventId);
-        event.setAnnotation(adminUpdateEvent.getAnnotation());
-        event.setCategory(categoriesRepository.findById(adminUpdateEvent.getCategory())
+        Category category = categoriesRepository.findById(adminUpdateEvent.getCategory())
                 .orElseThrow(() -> new NotFoundException(
-                        String.format("Category with id= %s not found", eventId))));
-        event.setDescription(adminUpdateEvent.getDescription());
-        event.setEventDate(LocalDateTime.parse(adminUpdateEvent.getEventDate(), DATE_TIME_FORMATTER));
-        event.setPaid(adminUpdateEvent.isPaid());
-        event.setParticipantLimit(adminUpdateEvent.getParticipantLimit());
-        event.setRequestModeration(adminUpdateEvent.isRequestModeration());
-        event.setTitle(adminUpdateEvent.getTitle());
+                        String.format("Category with id= %s not found", eventId)));
         log.info("Edit event with eventId={}", eventId);
-        return save(event);
+        return save(EventMapper.getEvent(event, adminUpdateEvent, category));
     }
 
     @Override
