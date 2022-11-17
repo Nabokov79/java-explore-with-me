@@ -6,7 +6,6 @@ import ru.practicum.ewm.compilations.dto.CompilationDto;
 import ru.practicum.ewm.compilations.mapper.CompilationMapper;
 import ru.practicum.ewm.compilations.model.Compilation;
 import ru.practicum.ewm.compilations.repository.CompilationsRepository;
-import ru.practicum.ewm.exeption.BadRequestException;
 import ru.practicum.ewm.exeption.NotFoundException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -29,9 +28,6 @@ public class PublicCompilationsServiceImpl implements PublicCompilationsService 
             compilations = repository.findAll(pageable).getContent();
         } else {
             compilations = repository.findAllByPinned(pinned,pageable);
-        }
-        if (compilations.isEmpty()) {
-            throw new BadRequestException(String.format("Compilation with pinned=%s not found", pinned));
         }
         log.info("Get all compilations with parameter pinned={}", pinned);
         return CompilationMapper.toListDto(compilations);
