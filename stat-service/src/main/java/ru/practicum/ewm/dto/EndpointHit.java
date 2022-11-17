@@ -9,11 +9,11 @@ import java.util.List;
 @Getter
 @Setter
 @AllArgsConstructor
-public class EndpointHitDto {
+public class EndpointHit {
 
     private String app;
 
-    private List<String> uri;
+    private String uri;
 
     private String ip;
 

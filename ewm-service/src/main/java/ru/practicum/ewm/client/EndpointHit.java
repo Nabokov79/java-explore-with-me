@@ -13,7 +13,7 @@ public class EndpointHit {
 
     private String app;
 
-    private List<String> uri;
+    private String uri;
 
     private String ip;
 
