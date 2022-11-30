@@ -32,7 +32,6 @@ public class PublicEventsServiceImpl implements PublicEventsService {
 
     @Override
     public List<EventShortDto> getAll(ParamUserRequest param, int from, int size, HttpServletRequest request) {
-        log.info("Sort = " + (param.getSort()));
         Pageable pageable = PageRequest.of(from / size, size);
         List<Event> events = repository.findAll(getRequestParamForDb(param), pageable).getContent();
         Map<Long, Long> views = eventClient.get(events);
@@ -72,7 +71,7 @@ public class PublicEventsServiceImpl implements PublicEventsService {
     private BooleanBuilder getRequestParamForDb(ParamUserRequest param) {
         BooleanBuilder booleanBuilder = new BooleanBuilder();
         booleanBuilder.and(QEvent.event.state.eq(State.PUBLISHED));
-        if (param.getText().isBlank()) {
+        if (param.getText() != null) {
             String text = param.getText();
             booleanBuilder.and((QEvent.event.annotation.containsIgnoreCase(text)
                     .or(QEvent.event.description.containsIgnoreCase(text))));
