@@ -2,6 +2,7 @@ package ru.practicum.ewm.paramRequest;
 
 import ru.practicum.ewm.events.model.Sort;
 import ru.practicum.ewm.events.model.State;
+
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -28,9 +29,15 @@ public class Param {
     public static ParamUserRequest toParamUserRequest(String text, List<Long> categories, Boolean paid, String rangeStart,
                                                       String rangeEnd, Boolean onlyAvailable, String sort) {
         ParamUserRequest param = new ParamUserRequest();
-        param.setText(text.toLowerCase());
-        param.setCategories(categories);
-        param.setPaid(paid);
+        if (text != null) {
+            param.setText(text.toLowerCase());
+        }
+        if (categories != null) {
+            param.setCategories(categories);
+        }
+        if (paid != null) {
+            param.setPaid(paid);
+        }
         if (rangeStart != null) {
             param.setRangeStart(LocalDateTime.parse(rangeStart, DATE_TIME_FORMATTER));
         }
