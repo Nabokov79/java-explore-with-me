@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ru.practicum.ewm.dto.EndpointHit;
 import ru.practicum.ewm.dto.ViewStats;
+import ru.practicum.ewm.exeption.BadRequestException;
 import ru.practicum.ewm.mapper.StatsMapper;
 import ru.practicum.ewm.model.App;
 import ru.practicum.ewm.model.QStat;
@@ -45,7 +46,7 @@ public class StatServiceImpl implements StatService {
         if (!uris.isEmpty()) {
             booleanBuilder.and(QStat.stat.uri.in(uris));
         } else {
-            return new ArrayList<>();
+            throw new BadRequestException(String.format("Uri list empty uris=%s", uris));
         }
         if (!start.isEmpty() && !end.isEmpty()) {
             booleanBuilder.and(QStat.stat.timestamp.after(LocalDateTime.parse(start, StatsMapper.DATA_TIME_FORMATTER)));
