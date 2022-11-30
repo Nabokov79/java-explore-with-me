@@ -90,7 +90,7 @@ public class PrivateFriendsServiceImpl implements PrivateFriendsService {
         if (users.isEmpty()) {
             throw new NotFoundException(String.format("Users with ids=%s not found", ids));
         }
-        if(users.size() != ids.size()) {
+        if (users.size() != ids.size()) {
             List<Long> idsDb = new ArrayList<>();
             for (Long id : ids) {
                 if (users.get(id) == null) {
