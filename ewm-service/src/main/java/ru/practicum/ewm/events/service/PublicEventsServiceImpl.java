@@ -53,6 +53,7 @@ public class PublicEventsServiceImpl implements PublicEventsService {
                     break;
             }
         }
+        eventClient.save(request.getRequestURI(), request.getRemoteAddr());
         log.info("Get all events with param: text={}, categories={}, paid={}, rangeStart={}," +
                         " rangeEnd={}, onlyAvailable={}, sort={}",
                 param.getText(), param.getCategories(), param.getPaid(), param.getRangeStart(), param.getRangeEnd(),
