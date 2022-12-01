@@ -24,6 +24,7 @@ public class PrivateFriendsServiceImpl implements PrivateFriendsService {
     @Override
     public void request(Long userId, Long requesterId) {
         log.info("Request friendship with parameters userId={}, requesterId={}", userId, requesterId);
+        validateUsers(List.of(userId, requesterId));
         Friendship friendship = getFriendship(userId, requesterId);
         if (friendship == null || friendship.getStatus().equals(StatusUser.REJECTED)) {
             friendshipRepository.save(UsersMapper.toFriendship(userId, requesterId, StatusUser.PENDING));
@@ -35,6 +36,7 @@ public class PrivateFriendsServiceImpl implements PrivateFriendsService {
     @Override
     public List<Friendship> getFriendshipRequests(Long userId) {
         log.info("Request  get friends for user with userId={}", userId);
+        validateUsers(List.of(userId));
         return new ArrayList<>(friendshipRepository.findAllByUserIdAndStatus(userId, StatusUser.PENDING));
     }
 
@@ -80,6 +82,7 @@ public class PrivateFriendsServiceImpl implements PrivateFriendsService {
 
     private Friendship getFriendship(Long userId, Long friendId) {
         log.info("Validated ids userId={}, friendId={}", userId, friendId);
+        validateUsers(List.of(userId, friendId));
         return friendshipRepository.findByUserIdAndFriendId(userId, friendId);
     }
 
@@ -87,17 +90,10 @@ public class PrivateFriendsServiceImpl implements PrivateFriendsService {
         log.info("Get users with ids={}", ids);
         Map<Long, User> users = usersRepository.findAllById(ids).stream()
                 .collect(Collectors.toMap(User::getId, user -> user));
-        if (users.isEmpty()) {
-            throw new NotFoundException(String.format("Users with ids=%s not found", ids));
-        }
         if (users.size() != ids.size()) {
-            List<Long> idsDb = new ArrayList<>();
-            for (Long id : ids) {
-                if (users.get(id) == null) {
-                    idsDb.add(id);
-                }
-            }
-            throw new NotFoundException(String.format("User with id= %s not found", idsDb));
+            List<Long> idsDb = new ArrayList<>(users.keySet());
+            ids = ids.stream().filter(e -> !idsDb.contains(e)).collect(Collectors.toList());
+            throw new NotFoundException(String.format("User with id= %s not found", ids));
         }
         return users;
     }
