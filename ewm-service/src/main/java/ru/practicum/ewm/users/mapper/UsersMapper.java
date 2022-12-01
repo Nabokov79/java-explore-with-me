@@ -32,7 +32,7 @@ public class UsersMapper {
         return users.stream().map(UsersMapper::toUserDto).collect(Collectors.toList());
     }
 
-    public static Friendship toFriends(Long userId, Long requesterId, StatusUser status) {
+    public static Friendship toFriendship(Long userId, Long requesterId, StatusUser status) {
         Friendship friend = new Friendship();
         friend.setUserId(userId);
         friend.setFriendId(requesterId);
