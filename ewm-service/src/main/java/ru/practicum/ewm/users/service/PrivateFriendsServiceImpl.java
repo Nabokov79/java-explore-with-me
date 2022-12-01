@@ -19,30 +19,30 @@ import java.util.stream.Collectors;
 public class PrivateFriendsServiceImpl implements PrivateFriendsService {
 
     private final UsersRepository usersRepository;
-    private final FriendshipRepository friendsRepository;
+    private final FriendshipRepository friendshipRepository;
 
     @Override
     public void request(Long userId, Long requesterId) {
         log.info("Request friendship with parameters userId={}, requesterId={}", userId, requesterId);
-        Friendship friendship = validateFriendship(userId, requesterId);
+        Friendship friendship = getFriendship(userId, requesterId);
         if (friendship == null || friendship.getStatus().equals(StatusUser.REJECTED)) {
-            friendsRepository.save(UsersMapper.toFriends(userId, requesterId, StatusUser.PENDING));
+            friendshipRepository.save(UsersMapper.toFriendship(userId, requesterId, StatusUser.PENDING));
         } else {
             throw new BadRequestException("Your request is awaiting confirmation or has been confirmed");
         }
     }
 
     @Override
-    public List<Friendship> getRequests(Long userId) {
+    public List<Friendship> getFriendshipRequests(Long userId) {
         log.info("Request  get friends for user with userId={}", userId);
-        return new ArrayList<>(friendsRepository.findAllByUserIdAndStatus(userId, StatusUser.PENDING));
+        return new ArrayList<>(friendshipRepository.findAllByUserIdAndStatus(userId, StatusUser.PENDING));
     }
 
     @Override
     public void confirm(Long userId, Long requesterId) {
-        getUsers(List.of(userId, requesterId));
-        Friendship user = validateFriendship(userId, requesterId);
-        Friendship friend = validateFriendship(requesterId, userId);
+        validateUsers(List.of(userId, requesterId));
+        Friendship user = getFriendship(userId, requesterId);
+        Friendship friend = getFriendship(requesterId, userId);
         if (user != null) {
             user.setStatus(StatusUser.CONFIRMED);
         } else {
@@ -51,39 +51,39 @@ public class PrivateFriendsServiceImpl implements PrivateFriendsService {
             );
         }
         if (friend == null) {
-            friend = UsersMapper.toFriends(requesterId, userId, StatusUser.CONFIRMED);
-            friendsRepository.saveAll(List.of(user, friend));
+            friend = UsersMapper.toFriendship(requesterId, userId, StatusUser.CONFIRMED);
+            friendshipRepository.saveAll(List.of(user, friend));
         }
         log.info("Request confirm friendship with parameters userId={}, requesterId={}", userId, requesterId);
     }
 
     @Override
     public void reject(Long userId, Long requesterId) {
-        getUsers(List.of(userId, requesterId));
-        Friendship user = validateFriendship(userId, requesterId);
+        validateUsers(List.of(userId, requesterId));
+        Friendship user = getFriendship(userId, requesterId);
         user.setStatus(StatusUser.REJECTED);
-        friendsRepository.save(user);
+        friendshipRepository.save(user);
         log.info("Request reject friendship with parameters userId={}, requesterId={}", userId, requesterId);
     }
 
     @Override
-    public List<UserDto> get(Long userId) {
+    public List<UserDto> getFriends(Long userId) {
         log.info("Request get friends users with userId={}", userId);
-        return UsersMapper.toListDto(new ArrayList<>(getUsers(List.of(userId)).get(userId).getFriends()));
+        return UsersMapper.toListDto(new ArrayList<>(validateUsers(List.of(userId)).get(userId).getFriends()));
     }
 
     @Override
     public void delete(Long userId, Long friendId) {
         log.info("Request delete friendship with parameters userId={}, friendId={}", userId, friendId);
-        friendsRepository.deleteAllByUserIdAndFriendId(userId, friendId);
+        friendshipRepository.deleteAllByUserIdAndFriendId(userId, friendId);
     }
 
-    private Friendship validateFriendship(Long userId, Long friendId) {
+    private Friendship getFriendship(Long userId, Long friendId) {
         log.info("Validated ids userId={}, friendId={}", userId, friendId);
-        return friendsRepository.findByUserIdAndFriendId(userId, friendId);
+        return friendshipRepository.findByUserIdAndFriendId(userId, friendId);
     }
 
-    protected Map<Long, User> getUsers(List<Long> ids) {
+    protected Map<Long, User> validateUsers(List<Long> ids) {
         log.info("Get users with ids={}", ids);
         Map<Long, User> users = usersRepository.findAllById(ids).stream()
                 .collect(Collectors.toMap(User::getId, user -> user));

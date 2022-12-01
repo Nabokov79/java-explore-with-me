@@ -9,13 +9,13 @@ public interface PrivateFriendsService {
 
     void request(Long userId, Long requesterId);
 
-    List<Friendship> getRequests(@PathVariable Long userId);
+    List<Friendship> getFriendshipRequests(@PathVariable Long userId);
 
     void confirm(Long userId, Long requesterId);
 
     void reject(Long userId, Long requesterId);
 
-    List<UserDto> get(Long userId);
+    List<UserDto> getFriends(Long userId);
 
     void delete(Long userId, Long friendId);
 }

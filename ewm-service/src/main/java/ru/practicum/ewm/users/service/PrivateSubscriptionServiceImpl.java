@@ -44,7 +44,7 @@ public class PrivateSubscriptionServiceImpl implements PrivateSubscriptionServic
 
     @Override
     public List<UserDto> subscribe(Long userId, Long subscriberId) {
-        Map<Long, User> users = privateFriendsService.getUsers(List.of(userId, subscriberId));
+        Map<Long, User> users = privateFriendsService.validateUsers(List.of(userId, subscriberId));
         if (users.get(userId).isSubscription()) {
             repository.save(UsersMapper.toSubscription(userId, subscriberId, true));
             return Stream.of(users.get(userId)).map(UsersMapper::toUserDto).collect(Collectors.toList());
@@ -55,7 +55,7 @@ public class PrivateSubscriptionServiceImpl implements PrivateSubscriptionServic
 
     @Override
     public void unsubscribe(Long userId, Long subscriberId) {
-        privateFriendsService.getUsers(List.of(userId, subscriberId));
+        privateFriendsService.validateUsers(List.of(userId, subscriberId));
         Subscription subscription = repository.findByUserIdAndSubscriberId(userId, subscriberId);
         if (subscription.isStatus()) {
             subscription.setStatus(false);
@@ -68,13 +68,13 @@ public class PrivateSubscriptionServiceImpl implements PrivateSubscriptionServic
     public List<UserDto> get(Long userId) {
         log.info("Request get subscribers user userId={}", userId);
         return UsersMapper.toListDto(
-                new ArrayList<>(privateFriendsService.getUsers(List.of(userId)).get(userId).getSubscribers())
+                new ArrayList<>(privateFriendsService.validateUsers(List.of(userId)).get(userId).getSubscribers())
         );
     }
 
     @Override
     public List<EventFullDto> getEvents(Long userId, Long subscriberId, int from, int size) {
-        privateFriendsService.getUsers(List.of(userId, subscriberId));
+        privateFriendsService.validateUsers(List.of(userId, subscriberId));
         Friendship friendship = friendsRepository.findAllByUserIdAndFriendIdAndStatus(userId, subscriberId,
                                                                                               StatusUser.CONFIRMED);
         Pageable pageable = PageRequest.of(from / size, size);
