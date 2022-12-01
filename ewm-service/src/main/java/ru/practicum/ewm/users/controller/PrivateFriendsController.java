@@ -22,8 +22,8 @@ public class PrivateFriendsController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Friendship>> getRequests(@PathVariable Long userId) {
-        return ResponseEntity.ok().body(service.getRequests(userId));
+    public ResponseEntity<List<Friendship>> getFriendshipRequests(@PathVariable Long userId) {
+        return ResponseEntity.ok().body(service.getFriendshipRequests(userId));
     }
 
     @PatchMapping("/requester/{requesterId}/confirm")
@@ -40,8 +40,8 @@ public class PrivateFriendsController {
     }
 
     @GetMapping("/friends")
-    public ResponseEntity<List<UserDto>> get(@PathVariable Long userId) {
-        return ResponseEntity.ok().body(service.get(userId));
+    public ResponseEntity<List<UserDto>> getFriends(@PathVariable Long userId) {
+        return ResponseEntity.ok().body(service.getFriends(userId));
     }
 
     @DeleteMapping("/friend/{friendId}/delete")
