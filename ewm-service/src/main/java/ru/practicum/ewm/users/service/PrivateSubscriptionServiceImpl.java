@@ -92,6 +92,11 @@ public class PrivateSubscriptionServiceImpl implements PrivateSubscriptionServic
                      .collect(Collectors.toList());
     }
 
+    @Override
+    public void delete(Long userId, Long subscriberId) {
+        repository.deleteByUserIdAndSubscriberId(userId, subscriberId);
+    }
+
     private  List<Event> getPredicate(Long userId) {
         JPAQueryFactory query = new JPAQueryFactory(entityManager);
         BooleanBuilder booleanBuilder = new BooleanBuilder();

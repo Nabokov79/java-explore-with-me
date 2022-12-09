@@ -24,7 +24,6 @@ public class PrivateFriendsServiceImpl implements PrivateFriendsService {
     @Override
     public void request(Long userId, Long requesterId) {
         log.info("Request friendship with parameters userId={}, requesterId={}", userId, requesterId);
-        validateUsers(List.of(userId, requesterId));
         Friendship friendship = getFriendship(userId, requesterId);
         if (friendship == null || friendship.getStatus().equals(StatusUser.REJECTED)) {
             friendshipRepository.save(UsersMapper.toFriendship(userId, requesterId, StatusUser.PENDING));
@@ -42,7 +41,6 @@ public class PrivateFriendsServiceImpl implements PrivateFriendsService {
 
     @Override
     public void confirm(Long userId, Long requesterId) {
-        validateUsers(List.of(userId, requesterId));
         Friendship user = getFriendship(userId, requesterId);
         Friendship friend = getFriendship(requesterId, userId);
         if (user != null) {
@@ -61,7 +59,6 @@ public class PrivateFriendsServiceImpl implements PrivateFriendsService {
 
     @Override
     public void reject(Long userId, Long requesterId) {
-        validateUsers(List.of(userId, requesterId));
         Friendship user = getFriendship(userId, requesterId);
         user.setStatus(StatusUser.REJECTED);
         friendshipRepository.save(user);
@@ -90,7 +87,7 @@ public class PrivateFriendsServiceImpl implements PrivateFriendsService {
         log.info("Get users with ids={}", ids);
         Map<Long, User> users = usersRepository.findAllById(ids).stream()
                 .collect(Collectors.toMap(User::getId, user -> user));
-        if (users.size() != ids.size()) {
+        if (users.size() != ids.size() || users.isEmpty()) {
             List<Long> idsDb = new ArrayList<>(users.keySet());
             ids = ids.stream().filter(e -> !idsDb.contains(e)).collect(Collectors.toList());
             throw new NotFoundException(String.format("User with id= %s not found", ids));
