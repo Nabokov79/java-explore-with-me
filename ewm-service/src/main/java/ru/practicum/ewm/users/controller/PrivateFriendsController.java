@@ -47,6 +47,6 @@ public class PrivateFriendsController {
     @DeleteMapping("/friend/{friendId}/delete")
     public ResponseEntity<String> delete(@PathVariable Long userId, @PathVariable Long friendId) {
         service.delete(userId, friendId);
-        return ResponseEntity.ok("Пользователь удален.");
+        return ResponseEntity.ok("Дружба удалена.");
     }
 }

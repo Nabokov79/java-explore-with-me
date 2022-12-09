@@ -39,4 +39,10 @@ public class PrivateSubscriptionController {
                             @Positive @RequestParam(name = "size", defaultValue = "10", required = false) int size) {
         return ResponseEntity.ok().body(service.getEvents(userId, subscriberId, from, size));
     }
+
+    @DeleteMapping("/subscriber/{subscriberId}/delete")
+    public ResponseEntity<String> delete(@PathVariable Long userId, @PathVariable Long subscriberId) {
+        service.delete(userId, subscriberId);
+        return ResponseEntity.ok("Подписка удалена.");
+    }
 }
