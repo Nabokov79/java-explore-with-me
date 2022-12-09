@@ -27,8 +27,15 @@ public class AdminUsersController {
     }
 
     @PostMapping
-    public ResponseEntity<UserDto> create(@Validated @RequestBody NewUserRequest newUser) {
-        return ResponseEntity.ok().body(service.create(newUser));
+    public ResponseEntity<UserDto> create(@Validated @RequestBody NewUserRequest newUser,
+                                          @RequestParam(defaultValue = "false") Boolean subscription) {
+        return ResponseEntity.ok().body(service.create(newUser, subscription));
+    }
+
+    @PatchMapping("/{userId}")
+    public ResponseEntity<UserDto> update(@PathVariable Long userId,
+                                          @RequestParam(defaultValue = "false") Boolean subscription) {
+        return ResponseEntity.ok().body(service.update(userId, subscription));
     }
 
     @DeleteMapping(value = "/{userId}")

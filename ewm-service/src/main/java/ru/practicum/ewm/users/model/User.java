@@ -1,11 +1,10 @@
 package ru.practicum.ewm.users.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
+import org.hibernate.annotations.WhereJoinTable;
 
 import javax.persistence.*;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -22,4 +21,22 @@ public class User {
     private String name;
     @Column(name = "email", nullable = false)
     private String email;
+    @Column(name = "subscription", nullable = false)
+    private boolean subscription;
+
+    @ManyToMany(cascade = {CascadeType.ALL}, fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "friendships",
+            joinColumns =  {@JoinColumn(name = "user_id")},
+            inverseJoinColumns = {@JoinColumn(name = "friend_id")})
+    @WhereJoinTable(clause = "status='CONFIRMED'")
+    private Set<User> friends;
+
+    @ManyToMany(cascade = {CascadeType.ALL}, fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "subscriptions",
+            joinColumns =  {@JoinColumn(name = "user_id")},
+            inverseJoinColumns = {@JoinColumn(name = "subscriber_id")})
+    @WhereJoinTable(clause = "status='true'")
+    private Set<User> subscribers;
 }
