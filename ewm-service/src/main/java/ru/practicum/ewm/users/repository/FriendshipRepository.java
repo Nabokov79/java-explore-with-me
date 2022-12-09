@@ -19,11 +19,16 @@ public interface FriendshipRepository extends JpaRepository<Friendship, Long> {
 
     @Modifying
     @Transactional
-    @Query("delete from Friendship f where f.userId = ?1 or f.friendId = ?1")
-    void deleteAllByUserId(Long userId);
+    @Query("delete " +
+            "from Friendship f" +
+            " where f.userId = ?1 and f.friendId = ?2" +
+            " or f.userId = ?2 and f.friendId = ?1")
+    void deleteAllByUserIdAndFriendId(Long userId, Long friendId);
 
     @Modifying
     @Transactional
-    @Query("delete from Friendship f where f.userId = ?1 and f.friendId = ?2 or f.userId = ?2 and f.friendId = ?1")
-    void deleteAllByUserIdAndFriendId(Long userId, Long friendId);
+    @Query("delete " +
+            "from Friendship f" +
+            " where f.userId = ?1 or f.friendId = ?1")
+    void deleteAllByUserId(Long userId);
 }

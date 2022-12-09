@@ -14,4 +14,9 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, Long
     @Transactional
     @Query("delete from Subscription s where s.subscriberId = ?1")
     void deleteAllByUserId(Long userId);
+
+    @Modifying
+    @Transactional
+    @Query("delete from Subscription s where s.userId = ?1 and s.subscriberId = ?2")
+    void deleteByUserIdAndSubscriberId(Long userId, Long subscriberId);
 }
